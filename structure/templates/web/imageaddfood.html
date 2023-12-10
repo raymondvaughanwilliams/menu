@@ -1,0 +1,101 @@
+{% extends "web/base.html" %}
+{% block content %}
+   
+    <!-- Content ================================================== -->
+    <div class="container margin_60_35">
+        <div class="row">
+            
+            <div class="col-lg-12">
+                <div class="box_style_2">
+                    <h2 class="inner">Add Foods</h2>
+                    
+
+                   
+              <!-- End box_style_1 -->
+      
+  
+        <form method="post">
+            {{ form.csrf_token }}
+            {{ form.hidden_tag() }}
+        
+            {{ form.restaurant.label }} 
+            <select class="!border-0 !rounded-md lg:w-1/2 w-full">
+                <option>Choose a restaurant</option>
+                {% for restaurant in restaurants %}
+                <option value="{{restaurant.id}}"><span>{{restaurant.name}}</i> </span></option>
+                {% endfor %}
+            </select>
+            
+            <div id="foods-container">
+                {% for i in range(form.foods.entries|length) %}
+                <div class="food-row ">
+                    <div class="row">
+                    <div class=" col-md-3">
+                        <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="name-{{ i }}" class="form-control" required>
+                    </div>
+                </div>
+                    <div class=" col-md-2">
+                        <div class="form-group">
+                    <label>Price</label>
+                    <input type="integer" name="price-{{ i }}" class="form-control" required>
+</div>
+</div>
+<div class="col-md-2">
+    <div class="form-group">
+                    {{ form.foods.entries[i].category.label }}
+                    <select name="foods-{{ i }}-category" class="form-control">
+                        <option>Choose a category</option>
+                        {% for category in categories %}
+                        <option value="{{category.id}}"><span>{{category.name}}</span></option>
+                        {% endfor %}
+                    </select>
+                    </div>
+                </div>
+        
+                    <button type="button" class="btn btn-danger m-4 remove-food">-</button>
+                </div>
+            </div>
+                {% endfor %}
+            </div>
+        <div class="row">
+            <button type="button" class="btn btn-success m-3" id="add-food">+</button>
+            </div>
+            {{ form.submit }}
+          </form>
+
+    </div><!-- End container -->
+    <!-- End Content =============================================== -->
+    <script>
+        // JavaScript code to dynamically add and remove food rows
+        document.addEventListener('DOMContentLoaded', function () {
+            const foodsContainer = document.getElementById('foods-container');
+            const addFoodButton = document.getElementById('add-food');
+    
+            addFoodButton.addEventListener('click', function () {
+                const template = document.querySelector('.food-row');
+                const clone = template.cloneNode(true);
+    
+                // Generate unique names for the cloned form fields
+                const index = foodsContainer.childElementCount;
+                clone.querySelectorAll('input, select').forEach(field => {
+                    const originalName = field.getAttribute('name');
+                    if (originalName) {
+                        // Update the index in the name, price, and category attributes
+                        const newName = originalName.replace(/-(\d+)/, `-${index}`);
+                        field.setAttribute('name', newName);
+                    }
+                });
+    
+                clone.querySelector('.remove-food').addEventListener('click', function () {
+                    clone.remove();
+                });
+    
+                foodsContainer.appendChild(clone);
+            });
+        });
+    </script>
+
+    
+{%endblock%}

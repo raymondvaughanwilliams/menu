@@ -32,6 +32,7 @@ class AboutForm(FlaskForm):
     aboutimagelink = StringField('Firebase Link')
     link3 = StringField('Firebase Link')
     logo = FileField('Update Logo', validators=[FileAllowed(['jpg', 'png'])])
+    menu = FileField('Upload File', validators=[FileAllowed(['jpg', 'png'])])
     carousel_image_1 =FileField('Update Banner Image', validators=[FileAllowed(['jpg', 'png'])])
 
     submit = SubmitField('Update')

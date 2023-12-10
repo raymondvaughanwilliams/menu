@@ -52,7 +52,8 @@ with app.app_context():
 # jwt = JWTManager(app)
 
 
-app.config['UPLOADED_PHOTOS_DEST'] = os.path.join(basedir, 'static/images/certificates')
+app.config['UPLOADED_PHOTOS_DEST'] = os.path.join(basedir, 'static/uploads/issues')
+# app.config['UPLOADED_PHOTOS_ALLOW'] = set(['jpg', 'jpeg', 'png', 'gif'])
 photos = UploadSet('photos', IMAGES)
 configure_uploads(app, photos)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
@@ -89,8 +90,10 @@ mail = Mail(app)
 
 from structure.core.views import core
 from structure.users.views import users
+from structure.web.views import web
 from structure.error_pages.handlers import error_pages
 
 app.register_blueprint(core)
 app.register_blueprint(users)
+app.register_blueprint(web)
 app.register_blueprint(error_pages)

@@ -1,0 +1,7 @@
+{%if comment.parent_comment != None %}
+<ul>
+    {% for reply in comment.parent_comment %}
+        <li>{{ reply.content }}</li>
+    {% endfor %}
+</ul>
+{%endif%}

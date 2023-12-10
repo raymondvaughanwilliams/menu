@@ -28,12 +28,9 @@ class User(db.Model,UserMixin):
     location = db.Column(db.String(128))
     role = db.Column(db.String,nullable=True)
     phone_number = db.Column(db.String)
-    biography = db.Column(db.String)
+    # biography = db.Column(db.String)
     status=db.Column(db.String,default="unverified")
-    index_number = db.Column(db.String)
-    completed_year=db.Column(db.String)
-    # rec_payment_id = db.Column(db.Integer,db.ForeignKey('payments.id'),nullable=True)
-    # payments = db.relationship('Payment',backref='users',lazy=True)
+
 
 
     # roles = db.relationship('Roles', secondary='user_roles')
@@ -45,13 +42,9 @@ class User(db.Model,UserMixin):
         self.name = name
         self.password_hash = generate_password_hash(password)
         self.role = role
-        # self.rem_chatweeks = rem_chatweeks
-        # self.rem_sessions=rem_sessions
-        # self.pref_medium = pref_medium
-        # self.pref_help = pref_help
-        # self.pref_therapistgender = pref_therapistgender
         self.last_name = last_name
         self.number = number
+   
 
     def check_password(self,password):
         return check_password_hash(self.password_hash,password)
@@ -61,200 +54,226 @@ class User(db.Model,UserMixin):
 
 
 
+# class Issue(db.Model):
+#     __tablename__ = 'issues'
+#     id = db.Column(db.Integer, primary_key=True)
+#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     user = db.relationship("User", foreign_keys=[user_id])
+#     organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'))
+#     organization = db.relationship("Organization", foreign_keys=[organization_id])
+#     title = db.Column(db.String(120))
+#     description = db.Column(db.String(120))
+#     location = db.Column(db.String(120))
+#     contact = db.Column(db.String(120))
+    
+#     image1 = db.Column(db.String(120))
+#     image2 = db.Column(db.String(120))
+#     image3 = db.Column(db.String(120))
+#     image4 = db.Column(db.String(120))
+#     views = db.Column(db.Integer,default=0)
+#     # likes = db.Column(db.Integer)
+#     date = db.Column(db.Date)
+#     likes_entries = db.relationship('LikeDislike', backref='issues', lazy=True)
 
+#     def __init__(self,user_id,organization_id,title,description,location,contact,date):
+#         self.user_id = user_id
+#         self.organization_id = organization_id
+#         self.title = title
+#         self.description = description
+#         self.location = location
+#         self.contact = contact
+#         self.date = date
+#         # self.likes = likes
 
-class About(db.Model):
-
-
-    id = db.Column(db.Integer,primary_key=True)
-    title = db.Column(db.String(140),nullable=False)
-    subtitle= db.Column(db.String(140),nullable=True)
-    atext = db.Column(db.Text,nullable=True)
-    image = db.Column(db.String(64),nullable=True,default='default_profile.png')
-    about_image = db.Column(db.String(64),nullable=True,default='default_profile.png')
-    location = db.Column(db.String(140),nullable=False,default='location')
-    number = db.Column(db.Integer,nullable=True)
-    email = db.Column(db.String(64),unique=True,index=True)
-    contact_subtitle = db.Column(db.String(140),nullable=True)
-    about_subtitle = db.Column(db.String(140),nullable=True)
-    feature_subtitle = db.Column(db.String(140),nullable=True)
-    feature_paragraph = db.Column(db.Text,nullable=True)
-    faq_title = db.Column(db.String(140),nullable=True)
-    faq_subtitle = db.Column(db.String(140),nullable=True)
-    faq_paragraph = db.Column(db.String(140),nullable=True)
-    testimonial_title = db.Column(db.String(140),nullable=True)
-    testimonial_subtitle = db.Column(db.String(140),nullable=True)
-    testimonial_paragraph = db.Column(db.String(140),nullable=True)
-    team_title = db.Column(db.String(140),nullable=True)
-    team_subtitle = db.Column(db.String(140),nullable=True)
-    team_paragraph = db.Column(db.String(140),nullable=True)
-    logo = db.Column(db.String(64),nullable=True,default='default_profile.png')
-    carousel_image_1 = db.Column(db.String(64),nullable=True,default='default_profile.png')
-
-    def __init__(self,title,text,user_id,location,number,email,contact_subtitle,about_subtitle,
-    feature_subtitle,feature_paragraph,faq_title,faq_subtitle,faq_paragraph,testimonial_title,
-    testimonial_subtitle,testimonial_paragraph,team_title,team_subtitle,team_paragraph,logo,carousel_image_1,subtitle,about_image):
-        self.title = title
-        self.text = text
-        self.location = location
-        self.number = number
-        self.email = email
-        self.contact_subtitle = contact_subtitle
-        self.about_subtitle = about_subtitle
-        self.feature_subtitle = feature_subtitle
-        self.feature_paragraph = feature_paragraph
-        self.faq_title = faq_title
-        self.faq_subtitle = faq_subtitle
-        self.faq_paragraph = faq_paragraph
-        self.testimonial_title = testimonial_title
-        self.testimonial_subtitle = testimonial_subtitle
-        self.testimonial_paragraph = testimonial_paragraph
-        self.team_title = team_title
-        self.team_subtitle = team_subtitle
-        self.team_paragraph = team_paragraph
-        self.logo = logo
-        self.subtitle = subtitle
-        self.about_image = about_image
-        self.carousel_image_1 = carousel_image_1
-
-    def __repr__(self):
-        return f"Post ID: {self.id} -- {self.title} -- {self.location} -- {self.number} -- {self.email} -- {self.contact_subtitle}-- {self.about_subtitle}-- {self.feature_subtitle}-- {self.feature_paragraph}-- {self.faq_title}-- {self.faq_subtitle}-- {self.faq_paragraph}-- {self.testimonial_title}-- {self.testimonial_subtitle}-- {self.testimonial_paragraph}-- {self.team_title}-- {self.team_subtitle}-- {self.team_paragraph} -- {self.logo} -- {self.carousel_image_1}"
-
-
-
-
-class SipRequest(db.Model):
-    __tablename__ = "siprequests"
+class Category(db.Model):
+    __tablename__ = 'categories'
     id = db.Column(db.Integer, primary_key=True)
-    channels = db.Column(db.String(128), nullable=True)
-    other = db.Column(db.String(512), nullable=True)
-    codecs = db.Column(db.Integer, nullable=True)
-    inbound = db.Column(db.String(128), nullable=True)
-    outbound = db.Column(db.String(128), nullable=True)
-    provider = db.Column(db.String(128), nullable=True)
-    certificate = db.Column(db.String(128), nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    user = db.relationship("User", foreign_keys=[user_id])
-    status = db.Column(db.String(16), nullable=False,default="unverified")
-    email = db.Column(db.String(106), nullable=True)
-    name = db.Column(db.String(106), nullable=True)
-    customer_id = db.Column(db.String(106), nullable=True)
-    ip = db.Column(db.String(106), nullable=True)
-    
-    
+    name = db.Column(db.String(120))
 
 
-    def __repr__(self):
-        return f'<Part {self.name}>'
-
-
-
-
-
-class Extension(db.Model):
-    __tablename__ = "extensions"
+class Food(db.Model):
+    __tablename__ = 'foods'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(106), nullable=True)
-    password = db.Column(db.String(106), nullable=True)
-    ip = db.Column(db.String(106), nullable=True)
-    channels = db.Column(db.String(106), nullable=True)
-    company_id = db.Column(db.String(106), nullable=True)
-    siprequest_id = db.Column(db.Integer, db.ForeignKey('siprequests.id'))
-    siprequest = db.relationship("SipRequest", foreign_keys=[siprequest_id])
-
-    def __repr__(self):
-        return f'<Extension {self.name}>'
-
-
-
-class AirtimeTopUp(db.Model):
-    __tablename__ = "airtimetopups"
+    name = db.Column(db.String(120))
+    price = db.Column(db.Integer())
+    category = db.Column(db.String(120))
+    # location = db.Column(db.String(120))
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'))
+    restaurant = db.relationship("Restaurant", foreign_keys=[restaurant_id])
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
+    category = db.relationship("Category", foreign_keys=[category_id])  
+    
+class Restaurant(db.Model):
+    __tablename__ = 'restaurants'
     id = db.Column(db.Integer, primary_key=True)
-    payername = db.Column(db.String(106), nullable=True)
-    payermobile = db.Column(db.String(106), nullable=True)
-    payeremail = db.Column(db.String(106), nullable=True)
-    recipientmobile = db.Column(db.String(106), nullable=True)
-    amount = db.Column(db.String(106), nullable=True)
-    merchtxnref = db.Column(db.String(106), nullable=True)
-    countryid =db.Column(db.String(106), nullable=True)
-    oprid =db.Column(db.String(106), nullable=True)
-    vouchernumber =db.Column(db.String(106), nullable=True)
-    type =db.Column(db.String(106), nullable=True)
-    payerbankacctno =db.Column(db.String(106), nullable=True)
-    payerbankaccttitle =db.Column(db.String(106), nullable=True)
-    bankbranchsortcode =db.Column(db.String(106), nullable=True)
-    payermsisdn =db.Column(db.String(106), nullable=True)
-    recepientmsisdn =db.Column(db.String(106), nullable=True)
+    name = db.Column(db.String(120))
+    bio = db.Column(db.String(120))
+    location = db.Column(db.String(120))
+    contact1 = db.Column(db.String(120))
+    contact2 = db.Column(db.String(120))
+    contact3 = db.Column(db.String(120))
+    image1 = db.Column(db.String(120))
+    image2 = db.Column(db.String(120))
+    image3 = db.Column(db.String(120))
+    views = db.Column(db.Integer,default=0)
+    # likes = db.Column(db.Integer)
+    date = db.Column(db.Date)
+    # likes_entry = db.relationship('LikeDislike', backref='restaurants', lazy=True)
+    favorites_entry = db.relationship('Favorite', backref='restaurants', lazy=True)
+
+
+# class Organization(db.Model):
+
+#     __tablename__ = 'organizations'
+
+#     id = db.Column(db.Integer,primary_key=True)
+#     profile_image = db.Column(db.String(64),nullable=False,default='default_profile.png')
+#     location = db.Column(db.String(64))
+#     description = db.Column(db.String(254))
+#     workhours = db.Column(db.String(254))
+#     attachment1 = db.Column(db.String(254))
+#     attachment2 = db.Column(db.String(254))
+#     likes = db.Column(db.String(254))
+#     disklikes = db.Column(db.String(254))
+#     views = db.Column(db.String(254))
+#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     user = db.relationship("User", foreign_keys=[user_id])    
+#     status=db.Column(db.String,default="unverified")
+#     likes_entries = db.relationship('LikeDislike', backref='organizations', lazy=True)
+
     
-    
 
-    def __repr__(self):
-        return f'<Extension {self.name}>'
+# class IssueComment(db.Model):
+#     __tablename__ = 'issuecomments'
+#     id = db.Column(db.Integer, primary_key=True)
+#     issue_id = db.Column(db.Integer, db.ForeignKey('issues.id'))
+#     issue = db.relationship("Issue", back_populates="issuecomments")
+#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     user = db.relationship("User")
+#     parent_comment_id = db.Column(db.Integer, db.ForeignKey('issuecomments.id'))
+#     parent_comment = db.relationship("IssueComment", remote_side=[id])
+#     content = db.Column(db.String(255))
+#     date = db.Column(db.Date)
+
+#     # roles = db.relationship('Roles', secondary='user_roles')
+
+# Issue.issuecomments = db.relationship("IssueComment", back_populates="issue", cascade="all, delete-orphan")
 
 
 
+# class Discussion(db.Model):
+#     __tablename__ = 'discussions'
+#     id = db.Column(db.Integer, primary_key=True)
+#     title = db.Column(db.String(120))
+#     content = db.Column(db.String(255))
+#     comments = db.relationship("DiscussionComment", back_populates="discussion", cascade="all, delete-orphan")
+#     views = db.Column(db.Integer)
+#     likes = db.Column(db.Integer)
+#     dislikes = db.Column(db.Integer)
+#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     user = db.relationship("User", foreign_keys=[user_id]) 
+#     organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'))
+#     organization = db.relationship("Organization", foreign_keys=[organization_id])
+#     likes_entries = db.relationship('LikeDislike', backref='discussions', lazy=True)
 
-class CDR(db.Model):
-    __tablename__ = "cdrs"
+# class DiscussionComment(db.Model):
+#     __tablename__ = 'discussioncomments'
+#     id = db.Column(db.Integer, primary_key=True)
+#     discussion_id = db.Column(db.Integer, db.ForeignKey('discussions.id'))
+#     discussion = db.relationship("Discussion", back_populates="comments")
+#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     user = db.relationship("User")
+#     parent_comment_id = db.Column(db.Integer, db.ForeignKey('discussioncomments.id'))
+#     parent_comment = db.relationship("DiscussionComment", remote_side=[id])
+#     content = db.Column(db.String(255))
+#     date = db.Column(db.Date)
+#     replies = db.relationship("DiscussionComment", back_populates="parent_comment", cascade="all, delete-orphan")
+
+
+
+# class Poll(db.Model):
+#     __tablename__ = 'polls'
+#     id = db.Column(db.Integer, primary_key=True)
+#     question = db.Column(db.String(255))
+#     options = db.relationship("PollOption", back_populates="poll", cascade="all, delete-orphan")
+#     votes = db.relationship("PollVote", back_populates="poll", cascade="all, delete-orphan")
+#     likes_entries = db.relationship('LikeDislike', backref='polls', lazy=True)
+#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     user = db.relationship("User")
+
+# class PollOption(db.Model):
+#     __tablename__ = 'polloptions'
+#     id = db.Column(db.Integer, primary_key=True)
+#     poll_id = db.Column(db.Integer, db.ForeignKey('polls.id'))
+#     poll = db.relationship("Poll", back_populates="options")
+#     option_text = db.Column(db.String(255))
+
+# class PollVote(db.Model):
+#     __tablename__ = 'pollvotes'
+#     id = db.Column(db.Integer, primary_key=True)
+#     poll_id = db.Column(db.Integer, db.ForeignKey('polls.id'))
+#     poll = db.relationship("Poll", back_populates="votes")
+#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+#     user = db.relationship("User")
+#     option_id = db.Column(db.Integer, db.ForeignKey('polloptions.id'))
+#     option = db.relationship("PollOption")
+
+
+# class LikeDislike(db.Model):
+#     __tablename__ ="likes"
+#     id = db.Column(db.Integer, primary_key=True)
+#     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+#     likeable_id = db.Column(db.Integer, nullable=False)
+#     likeable_type = db.Column(db.String(50), nullable=False)
+#     value = db.Column(db.Integer, nullable=False)
+#     poll_id = db.Column(db.Integer, db.ForeignKey('polls.id'))
+#     poll = db.relationship('Poll', backref='like_entries')
+#     issue_id = db.Column(db.Integer, db.ForeignKey('issues.id'))
+#     issue = db.relationship('Issue', backref='like_entries')
+#     discussion_id = db.Column(db.Integer, db.ForeignKey('discussions.id'))
+#     discussion = db.relationship('Discussion', backref='like_entries')
+#     organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'))
+#     organization = db.relationship('Organization', backref='like_entries')
+#     restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'))
+#     restaurant = db.relationship('Restaurant', backref='like_entries')
+
+
+class Favorite(db.Model):
+    __tablename__ ="favorites"
     id = db.Column(db.Integer, primary_key=True)
-    call_type = db.Column(db.String(50))
-    number = db.Column(db.String(20))
-    call_direction = db.Column(db.String(50))
-    name = db.Column(db.String(100))
-    entity_id = db.Column(db.Integer)
-    entity_type = db.Column(db.String(50))
-    contact_id = db.Column(db.String(50))
-    queue_extension = db.Column(db.String(20))
-    agent = db.Column(db.String(50))
-    agent_first_name = db.Column(db.String(50))
-    agent_last_name = db.Column(db.String(50))
-    agent_email = db.Column(db.String(100))
-    duration = db.Column(db.Integer)
-    duration_timespan = db.Column(db.String(50))
-    date_time = db.Column(db.DateTime, default=datetime.utcnow)
-    call_start_time_local = db.Column(db.DateTime)
-    call_start_time_utc = db.Column(db.DateTime)
-    call_established_time_local = db.Column(db.DateTime)
-    call_established_time_utc = db.Column(db.DateTime)
-    call_end_time_local = db.Column(db.DateTime)
-    call_end_time_utc = db.Column(db.DateTime)
-    call_start_time_local_millis = db.Column(db.BigInteger)
-    call_start_time_utc_millis = db.Column(db.BigInteger)
-    call_established_time_local_millis = db.Column(db.BigInteger)
-    call_established_time_utc_millis = db.Column(db.BigInteger)
-    call_end_time_local_millis = db.Column(db.BigInteger)
-    call_end_time_utc_millis = db.Column(db.BigInteger)
-    subject = db.Column(db.String(200))
-    inbound_call_text = db.Column(db.Text)
-    missed_call_text = db.Column(db.Text)
-    outbound_call_text = db.Column(db.Text)
-    not_answered_outbound_call_text = db.Column(db.Text)  
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    likeable_id = db.Column(db.Integer, nullable=False)
+    likeable_type = db.Column(db.String(50), nullable=False)
+    type = db.Column(db.String(50))
+    food_id = db.Column(db.Integer, db.ForeignKey('foods.id'))
+    food = db.relationship('Food', backref='favorite_e')
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'))
+    restaurant = db.relationship('Restaurant', backref='favorite_e')
 
-    def __repr__(self):
-        return f'<Extension {self.name}>' 
- 
 
-class Contact(db.Model):
-    __tablename__ = "contacts"
+# class Upload(db.Model):
+    
+#     id = db.Column(db.Integer, primary_key=True)
+#     filename = db.Column(db.String(255), nullable=False)
+#     issue_id = db.Column(db.Integer, db.ForeignKey('issues.id'))
+#     issue = db.relationship('Issue', backref=db.backref('uploads', lazy=True))
+#     organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'))
+#     organization = db.relationship('Organization', backref=db.backref('uploads', lazy=True))
+    
+class Comment(db.Model):
+    __tablename__ = 'comments'
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(50))
-    last_name = db.Column(db.String(50))
-    email = db.Column(db.String(100))
-    phone_mobile = db.Column(db.String(20))
-    phone_mobile2 = db.Column(db.String(20))
-    phone_home = db.Column(db.String(20))
-    phone_home2 = db.Column(db.String(20))
-    phone_business = db.Column(db.String(20))
-    phone_business2 = db.Column(db.String(20))
-    phone_other = db.Column(db.String(20))
-    contact_url = db.Column(db.String(200))
-    entity_id = db.Column(db.Integer)
-    entity_type = db.Column(db.String(50))
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurants.id'))
+    restaurants = db.relationship("Restaurant", back_populates="comments")
+    content = db.Column(db.String(255))
+    date = db.Column(db.Date)
 
-    def __repr__(self):
-        return f'<Contact {self.phone_mobile}>'
-    
-    
+    # roles = db.relationship('Roles', secondary='user_roles')
+
+Restaurant.comments = db.relationship("Comment", back_populates="restaurants", cascade="all, delete-orphan")
+
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)

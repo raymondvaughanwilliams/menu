@@ -1,0 +1,68 @@
+﻿{% extends "web/base.html" %}
+{% block content %}
+    
+    <!-- SubHeader =============================================== -->
+    <section class="parallax-window" id="home" data-parallax="scroll" data-image-src="/static/quickfood/img/sub_header_home.jpg" data-natural-width="1400" data-natural-height="550">
+        <div id="subheader">
+            <div id="sub_content">
+                <h1>Restaurants Directory</h1>
+                <p>
+                    Search for restaurants.
+                </p>
+                <form method="post" action="list_page.html">
+                    <div id="custom-search-input">
+                        <div class="input-group ">
+                            <input type="text" class=" search-query" placeholder="Enter Restaurant Name">
+                            <span class="input-group-btn">
+                            <input type="submit" class="btn_search" value="">
+                            </span>
+                        </div>
+                    </div>
+                </form>
+            </div><!-- End sub_content -->
+        </div><!-- End subheader -->
+        </section><!-- End section -->
+    <!-- End SubHeader ============================================ -->
+
+    <div class="white_bg">
+        <div class="container margin_60">
+            <div class="main_title">
+                <h2 class="nomargin_top">RESTAURANTS</h2>
+                <p>
+                    Browse through restaurants for their menu.
+                </p>
+            </div>
+            <div class="row">
+                {% for restaurant in restaurants %}
+                <div class="col-lg-6">
+                    
+                    <a href="detail_page.html" class="strip_list">
+                        <div class="desc">
+                            <div class="thumb_strip">
+                                <img src="/static/quickfood/img/thumb_restaurant.jpg" alt="">
+                            </div>
+                            <div class="rating">
+                                <i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star"></i>
+                            </div>
+                            <h3>{{restaurant.name}}</h3>
+                           
+                            <div class="location">
+                                {{restaurant.location}} 
+                            </div>
+                            <ul>
+                                <li>Delivery available<i class="icon_check_alt2 ok"></i></li>
+                            </ul>
+                        </div><!-- End desc-->
+                    </a><!-- End strip_list-->
+                    </div>
+                    {%endfor%}
+                  
+             
+            </div><!-- End row -->
+        </div><!-- End container -->
+        <!-- Pagination links -->
+
+    </div><!-- End white_bg -->
+    
+    
+{% endblock %}

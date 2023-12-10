@@ -1,0 +1,92 @@
+{% extends "web/base.html" %}
+{% block content %}
+   
+
+    <!-- Content ================================================== -->
+    <div class="container margin_60_35">
+        <div class="row">
+            <div class="col-lg-4">
+                <p>
+                    <a class="btn_map" data-toggle="collapse" href="#collapseMap" aria-expanded="false" aria-controls="collapseMap" data-text-swap="Hide map" data-text-original="View on map">View on map</a>
+                </p>
+                <div class="box_style_2">
+                    <h4 class="nomargin_top">Opening time <i class="icon_clock_alt float-right"></i></h4>
+                    <ul class="opening_list">
+                        <form method="post">
+                            {{ form.csrf_token }}
+                            {{ form.hidden_tag() }}
+                            {{ form.restaurant_name.label }} {{ form.restaurant_name }}
+                       
+                            {{ form.submit }}
+                          </form>
+                    </ul>
+                </div>
+                <div class="box_style_2 d-none d-sm-block" id="help">
+                    <i class="icon_lifesaver"></i>
+                    <h4>Need <span>Help?</span></h4>
+                    <a href="tel://004542344599" class="phone">+45 423 445 99</a>
+                    <small>Monday to Friday 9.00am - 7.30pm</small>
+                </div>
+            </div>
+            <div class="col-lg-8">
+        
+                <div id="tools">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-4 col-5">
+                            <div class="styled-select">
+                                <select name="sort_rating" id="sort_rating">
+                                    <option value="" selected="">Sort by price</option>
+                                    <option value="lower">Lowest price</option>
+                                    <option value="higher">Highest price</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-9 col-sm-8 col-7">
+                            <a href="grid_list.html" class="bt_filters"><i class="icon-th"></i></a>
+                        </div>
+                    </div>
+                </div><!--End tools -->
+                {% if  restaurants %}
+                {%for restaurant in restaurants %}
+                <div class="strip_list wow fadeIn" data-wow-delay="0.1s">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="desc">
+                                <div class="thumb_strip">
+                                    <a href="{{url_for('web.restaurant',id=restaurant.id)}}"><img src="/static/quickdood/img/thumb_food.jpg" alt=""></a>
+                                </div>
+                                <div class="rating">
+                                    <i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star "></i><i class="icon_star"></i> (<small><a href="#0">98 reviews</a></small>)
+                                </div>
+                                <h3>{{restaurant.name}} - </h3>
+                            
+                                <div class="location">
+                                   {{restaurant.location}}  
+                                </div>
+                                <ul>
+                                    <li>Take away<i class="icon_check_alt2 ok"></i></li>
+                                    <li>Delivery<i class="icon_check_alt2 no"></i></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="go_to">
+                                <div>
+                                    <a href="{{url_for('web.restaurant',id=restaurant.id)}}" class="btn_1">View Menu</a>
+                                </div>
+                        </div>
+                        </div>
+                    </div>
+                    </div><!-- End row-->
+\                {%endfor%}
+{%else%}
+           
+
+        <a href="#0" class="load_more_bt wow fadeIn" data-wow-delay="0.2s">No Results Fpund</a>  
+        {%endif%}
+</div><!-- End col-md-9-->
+        </div><!-- End row -->
+    </div><!-- End container -->
+</div><!-- End container -->
+    <!-- End Content =============================================== -->
+{%endblock%}

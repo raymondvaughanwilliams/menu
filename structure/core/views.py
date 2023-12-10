@@ -13,1033 +13,770 @@ from flask import render_template, Blueprint, session, redirect, url_for, jsonif
 from flask_login import login_required
 from sqlalchemy import and_, or_, desc
 from flask_mail import Mail, Message
-
-from structure import db,mail ,photos
-from structure.core.forms import FilterForm,SipRequestForm
-from structure.models import User, About, SipRequest, CDR , Contact
+from datetime import date,datetime
+from structure import db,mail ,photos,app
+from structure.core.forms import FilterForm,SipRequestForm , IssueForm,NumberSearchForm,ExtForm
+from structure.about.forms import AboutForm
+from werkzeug.utils import secure_filename
+from PIL import Image
+import pytesseract 
+from io import BytesIO
+import base64
 
 core = Blueprint('core', __name__)
 
-API_KEY = os.environ.get('API_KEY')
-connex_username = os.environ.get('connex_username')
-connex_password = os.environ.get('connex_password')
-APP_ID = os.environ.get('APP_ID')
-APP_KEY = os.environ.get('APP_KEY')
-
-def require_api_key(view_function):
-    def decorated_function(*args, **kwargs):
-        if request.headers.get('Authorization') == API_KEY:
-            return view_function(*args, **kwargs)
-        else:
-            return jsonify({'error': 'Invalid API key', 'status': False}), 401
-
-    return decorated_function
-
-def generate_secure_password(length=12):
-    alphabet = string.ascii_letters + string.digits + string.punctuation
-    secure_password = ''.join(secrets.choice(alphabet) for _ in range(length))
-    return secure_password
 
 
+# @core.context_processor
+# def utility_processor():
+#     def get_option_percentage(poll_id, option_id):
+#         total_votes = PollVote.query.filter_by(poll_id=poll_id).count()
+#         option_votes = PollVote.query.filter_by(poll_id=poll_id, option_id=option_id).count()
+#         return round((option_votes / total_votes) * 100, 2) if total_votes > 0 else 0
+
+#     return dict(get_option_percentage=get_option_percentage)
+# # def require_api_key(view_function):
+# #     def decorated_function(*args, **kwargs):
+# #         if request.headers.get('Authorization') == API_KEY:
+# #             return view_function(*args, **kwargs)
+# #         else:
+# #             return jsonify({'error': 'Invalid API key', 'status': False}), 401
+
+# #     return decorated_function
 
 
-allowed_extensions = ['png', 'jpg', 'jpeg', 'gif','txt']
-def check_file_extension(filename):
-    return filename.rsplit('.', 1)[1].lower() in allowed_extensions
+# def get_total_likes(likeable_model, likeable_id):
+#     return LikeDislike.query.filter_by(likeable_type=likeable_model.__name__.lower(), likeable_id=likeable_id,value=1).count()
+
+# def get_total_dislikes(likeable_model, likeable_id):
+#     return LikeDislike.query.filter_by(likeable_type=likeable_model.__name__.lower(), likeable_id=likeable_id,value=0).count()
 
 
-@core.route('/base')
-def base():
-    '''
-    Example view of any other "core" page. Such as a info page, about page,
-    contact page. Any page that doesn't really sync with one of the models.
-    '''
-    about = About.query.all()
-    return render_template('base.html', about=about)
+# allowed_extensions = ['png', 'jpg', 'jpeg', 'gif','txt','pdf']
+# def check_file_extension(filename):
+#     return filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 
-@core.route('/things')
-def things():
-    '''
-    Example view of any other "core" page. Such as a info page, about page,
-    contact page. Any page that doesn't really sync with one of the models.
-    '''
-    about = SipRequest.query.all()
-    return render_template('things.html', about=about)
+# @core.route('/base')
+# def base():
+#     '''
+#     Example view of any other "core" page. Such as a info page, about page,
+#     contact page. Any page that doesn't really sync with one of the models.
+#     '''
+#     return render_template('base.html')
+
+# @core.route('/issues')
+# def issues():
+#     polls = Poll.query.all()
+#     organizations = Organization.query.all()
+#     issues = Issue.query.all()
+#     discussions = Discussion.query.all()
+#     return render_template('portal/issues.html', organizations = organizations,issues=issues,polls=polls,discussions=discussions)
+
+
+# @core.route('/myissues')
+# def myissues():
+#     polls = Poll.query.all()
+#     organizations = Organization.query.all()
+#     myissues = Issue.query.filter_by(user_id=session['id']).all()
+#     issues = Issue.query.all()
+#     discussions = Discussion.query.all()
+#     return render_template('portal/myissues.html', organizations = organizations,issues=issues,polls=polls,discussions=discussions)
+
+
+# @core.route('/discussions')
+# def discussions():
+#     discussions = Discussion.query.all()
+#     polls = Poll.query.all()
+#     issues = Issue.query.all()
+#     organizations = Organization.query.all()
+#     return render_template('portal/discussions.html', organizations = organizations,issues=issues,polls=polls,discussions=discussions)
+
+# @core.route('/mydiscussions')
+# def mydiscussions():
+#     polls = Poll.query.all()
+#     organizations = Organization.query.all()
+#     mydiscussions = Discussion.query.filter_by(user_id=session['id']).all()
+#     issues = Issue.query.all()
+#     discussions = Discussion.query.all()
+#     return render_template('portal/mydiscussions.html', organizations = organizations,mydiscussions=mydiscussions,polls=polls,discussions=discussions,issues=issues)
+
+
+# @core.route('/polls')
+# def polls():
+#     polls = Poll.query.all()
+#     issues = Issue.query.all()
+#     organizations = Organization.query.all()
+#     discussions = Discussion.query.all()
+#     return render_template('portal/polls.html', organizations = organizations,issues=issues,polls=polls,discussions=discussions)
+
+# @core.route('/mypolls')
+# def mypolls():
+#     polls = Poll.query.all()
+#     organizations = Organization.query.all()
+#     mypolls = Poll.query.filter_by(user_id=session['id']).all()
+#     issues = Issue.query.all()
+#     polls = Poll.query.all()
+#     discussions = Discussion.query.all()
+#     return render_template('portal/mypolls.html', organizations = organizations,mypolls=mypolls,polls=polls,discussions=discussions,issues=issues)
 
 
 
-@core.route('/agent/dashboard')
-@login_required
-def agent_dashboard():
-    user = User.query.filter_by(id=session['id']).first()
-    about = About.query.get(1)
-    name = "ecom"
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    session.pop('msg', None)
-    api_url = 'https://app.connexcs.com/api/cp/customer?status=inactive'
-    # response = requests.get(api_url)
-    response = requests.get(api_url, headers=headers,auth=HTTPBasicAuth(connex_username, connex_password))
-    inactive = response.json() if response.status_code == 200 else []
-    # print(response.content)
-    lowbalance_url = 'https://app.connexcs.com/api/cp/customer'
-    # lowbalance_response = requests.get(lowbalance_url)
-    lowbalance_response = requests.get(lowbalance_url, headers=headers,auth=HTTPBasicAuth(connex_username, connex_password))
-    lowbalance_response = lowbalance_response.json() if lowbalance_response.status_code == 200 else []
-    low_balance = [entry for entry in lowbalance_response if entry['credit'] < 200]
-    print('low_balance')
-    print(low_balance)
+
+# @core.route('/organizations')
+# def organizations():
+#     issues = Issue.query.all()
+#     organizations = Organization.query.all()
+#     polls = Poll.query.all()
+#     discussions = Discussion.query.all()
+#     return render_template('portal/organizations.html', organizations = organizations,issues=issues,polls=polls,discussions=discussions)
+
+# @core.route('/')
+# def home():
+#     # user = User.query.filter_by(id=session['id']).first()
+  
+  
+#     headers = {
+#         'Content-Type': 'application/json'
+#     }
+#     # session.pop('msg', None)
+#     # api_url = 'https://app.connexcs.com/api/cp/customer?status=inactive'
+#     # # response = requests.get(api_url)
+#     # response = requests.get(api_url, headers=headers,auth=HTTPBasicAuth(connex_username, connex_password))
+#     # inactive = response.json() if response.status_code == 200 else []
+#     # # print(response.content)
+ 
     
-    if session['role'] == 'agent':
-        name = user.name
-
-    return render_template(
-        'agentportal/dashboard.html',
-         user=user, about=about,
-        name=name,inactive=inactive,low_balance=low_balance
-    )
 
 
-@core.route('/customer/<int:customer_id>')
-def view_customer(customer_id):
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    api_url = 'https://app.connexcs.com/api/cp/customer?id=' + str(customer_id)
-    # lowbalance_response = requests.get(lowbalance_url)
-    response = requests.get(api_url, headers=headers,auth=HTTPBasicAuth(connex_username, connex_password))
-    response = response.json() if response.status_code == 200 else []
-    print('response')
-    print(response[0])
-    extension_list = []
-    # extensions = response[0]['sip_users']
-    # for extension in extensions:
-    sip_url = 'https://app.connexcs.com/api/cp/switch/user/?company_id='+str(customer_id)
-    # lowbalance_response = requests.get(lowbalance_url)
-    sipresponse = requests.get(sip_url, headers=headers,auth=HTTPBasicAuth(connex_username, connex_password))
-    sipresponse = sipresponse.json() if sipresponse.status_code == 200 else []
-    print(sipresponse)
-    for extension in sipresponse:
-        # print(extension)
-        # print('-------------')
-        extension_list.append(extension) 
-    # print('extensions')
-    # print(len(extension_list))
-    return render_template('agentportal/view_customer.html', customer_data=response,extension_list = extension_list)
+#     return render_template(
+#         'web/index.html',
+         
+#     )
 
 
 
 
-@core.route('/topup_customer', methods=['POST'])
-def topup_customer():
-    customer_id = request.form.get('customer_id')
+# @core.route('/dashboard')
+# # @login_required
+# def dashboard():
+#     issues = Issue.query.all()
+#     discussions = Discussion.query.all()
+#     organizations = Organization.query.all()
+#     polls = Poll.query.all()
+#     return render_template(
+#         'portal/dashboard.html',issues=issues, discussions= discussions, organizations= organizations,polls=polls
+         
+#     )
+
+
+# @core.route("/issues/new", methods=["GET", "POST"])
+# def new_issue():
+#     form = IssueForm()
+#     organizations  = Organization.query.all()
+#     # user = User.query.filter_by(id=session['id']).first()
     
-    description = request.form.get('description')
-    amount = float(request.form.get('amount'))  # Convert amount to float
-    print(customer_id)
-    print(amount)
-    api_url = 'https://app.connexcs.com/api/cp/payment'
-    headers = {
-        'Content-Type': 'application/json'
-    }
+#     if request.method == "POST":
+#         # if request.files.get('image1'):
+#         #     image1 = photos.save(request.files['image1'], name=secrets.token_hex(10) + ".")
+#         #     image1= "static/uploads/issues/"+image1
+#         #     print("image1")
+#         #     print(image1)
+        
+#         print(form.description.data)
+#         issue = Issue(user_id=session['id'],description= form.description.data,title = form.title.data,
+#                        location = form.location.data,organization_id = form.organization.data ,date = datetime.now(),contact=form.contact.data
+#                           )
+#         db.session.add(issue)
+#         db.session.commit()
+#         uploaded_files = request.files.getlist('images')
 
-    payment_data = {
-        'company_id': customer_id,
-        'description': description,
-        'total': amount,
-        'status':'Completed'
-    }
+#         # Process and save each uploaded file to the database
+#         for img in uploaded_files:
+#             # if img:
+#             filename = secure_filename(img.filename)
+#             print(filename)
+#             # file.save(photos.config['UPLOADED_PHOTOS_DEST'] + '/' + filename)
+#             image = photos.save(img, name=secrets.token_hex(10) + ".")
+#             image= "static/uploads/issues/"+image
 
-    response = requests.post(api_url, json=payment_data, headers=headers, auth=HTTPBasicAuth(connex_username, connex_password))
-    response = response.json()
-    print(response)
-    print(response)
-    if response['status'] == 'OK':
-        return redirect(url_for('core.view_customer',customer_id=customer_id))
-       
-    else:
-        return jsonify({"error": "Payment failed."})
+#             # Save file details to the database and associate with the issue
+#             upload = Upload(filename=image, issue=issue, issue_id=issue.id)
+#             db.session.add(upload)
+#             db.session.commit()
 
-# @core.route("/delete_siprequests/<int:result_id>", methods=['POST', 'GET'])
-# @login_required
-# def delete_siprequests(result_id):
-#     result = SipRequest.query.get_or_404(result_id)
-#     db.session.delete(result)
+  
+#     return render_template("portal/newissue.html",form=form,organizations=organizations)
+
+
+# @core.route('/issue/<int:issue_id>',methods=['GET', 'POST'])
+# def issue(issue_id):
+#     # form = NewsletterSubForm()
+#     issue =  Issue.query.filter(Issue.id == issue_id).first()
+#     issuecomments = IssueComment.query.filter_by(issue_id=issue_id, parent_comment_id=None).all()
+#     issue.views =issue.views + 1
 #     db.session.commit()
-#     return redirect(url_for('core.siprequests'))
-
-@core.route("/api/delete_siprequests", methods=['POST', 'GET'])
-def delete_siprequests():
-    siprequests = request.args.get('siprequests')
-    siprequests_list = [int(siprequest) for siprequest in siprequests.split(",")]
-    successfully_deleted = []
-    failed = []
-
-    for thesiprequest in siprequests_list:
-        siprequest = SipRequest.query.filter_by(id=thesiprequest).first()
-        if siprequest:
-            db.session.delete(siprequest)
-            db.session.commit()
-            successfully_deleted.append(thesiprequest)
-        else:
-            failed.append(thesiprequest)
-
-    payload = {
-        "status": True,
-        "message": " siprequests deleted",
-        "successful": successfully_deleted,
-        "failed": failed
-    }
-
-    return jsonify(payload), 200
+#     title = issue.title
+#     related = Issue.query.all()
+#     discussions = Discussion.query.all()
+#     polls = Poll.query.all()
+#     issues = Issue.query.all()
+#     return render_template('portal/issue.html',issue=issue,title=title,issuecomments=issuecomments,related=related,discussions=discussions,polls=polls,issues=issues)
 
 
-@core.route("/api/delete_farmers", methods=['POST', 'GET'])
-def delete_farmers():
-    farmers = request.args.get('farmers')
-    farmers_list = [int(farmer) for farmer in farmers.split(",")]
-    successfully_deleted = []
-    failed = []
+# @core.route('/issue/<int:issue_id>/add_comment', methods=['POST'])
+# def add_comment(issue_id):
+#     issue = Issue.query.get(issue_id)
+#     user_id = 3  # Replace with the actual user ID
+#     content = request.form.get('content')
+#     parent_comment_id = request.form.get('parent_comment_id')
+#     if parent_comment_id:
+#         parent_comment = IssueComment.query.get(parent_comment_id)
+#         comment = IssueComment(issue=issue, user_id=user_id, content=content, parent_comment=parent_comment)
+#     else:
+#         comment = IssueComment(issue=issue, user_id=user_id, content=content)    
+#     db.session.add(comment)
+#     db.session.commit()
 
-    for thefarmer in farmers_list:
-        farmer = Farmer.query.filter_by(id=thefarmer).first()
-        if farmer:
-            db.session.delete(farmer)
-            db.session.commit()
-            successfully_deleted.append(thefarmer)
-        else:
-            failed.append(thefarmer)
+#     return redirect(url_for('core.issue', issue_id=issue_id))
 
-    payload = {
-        "status": True,
-        "message": " Farmers deleted",
-        "successful": successfully_deleted,
-        "failed": failed
-    }
 
-    return jsonify(payload), 200
+# @core.route('/discussions')
+# def list_discussions():
+#     discussions = Discussion.query.all()
+#     return render_template('discussions.html', discussions=discussions)
+
+# @core.route('/discussion/<int:discussion_id>')
+# def view_discussion(discussion_id):
+#     total_likes = get_total_likes(Discussion, discussion_id)
+#     total_dislikes = get_total_dislikes(Discussion, discussion_id)
+#     print(total_likes)
+#     print("total_likes")
+#     discussion = Discussion.query.get(discussion_id)
+#     discussion.views = int(discussion.views) +1
+#     discussion.likes = total_likes
+#     discussion.dislikes = total_dislikes
+#     db.session.commit()
+#     discussions = Discussion.query.all()
+#     polls= Poll.query.all()
+#     comments = DiscussionComment.query.filter_by(discussion_id=discussion_id, parent_comment_id=None).all()
+    
+#     return render_template('portal/discussion.html', discussion=discussion, comments=comments,discussions=discussions,polls=polls,total_likes=total_likes,total_dislikes=total_dislikes)
 
 
 
-
-@core.route("/studentsapi", methods=["GET", "POST"])
-def studentsapi():
-    students = User.query.filter_by(role='student').all()
-    student_list = []
-
-    if students:
-        for student in students:
-            payload = {
-                "id": student.id,
-                "name": student.name,
-                "index_number": student.index_number,
-                "completed_year": student.completed_year,
-             
-            }
-            student_list.append(payload)
-
-        context = {
-            "status": True,
-            "message": " student found!",
-            "data": student_list,
-        }
-
-        return jsonify(context), 200
-    else:
-        context = {
-            "status": False,
-            "message": "student not found",
-            "error": "null"
-        }
-
-        return jsonify(context), 404
-
-@core.route("/customersapi", methods=["GET", "POST"])
-def resultsapi():
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    session.pop('msg', None)
-    api_url = 'https://app.connexcs.com/api/cp/customer'
-    # response = requests.get(api_url)
-    response = requests.get(api_url, headers=headers,auth=HTTPBasicAuth(connex_username, connex_password))
-    customers = response.json() if response.status_code == 200 else []
-    results_list = []
-    print("resultsapi")
-    print(customers)
-
-    if customers:
-        for result in customers:
-            print('res')
-       
-            payload = {
-                "id": result['id'],
-                "name": result['name'],
-                "credit": result['credit'],
-                "ip": result['ips'],
-                "debit_limit": result['debit_limit']
-                
-            }
-            results_list.append(payload)
-
-        context = {
-            "status": True,
-            "message": " result found!",
-            "data": results_list,
-        }
-
-        return jsonify(context), 200
-    else:
-        context = {
-            "status": False,
-            "message": "result not found",
-            "error": "null"
-        }
-
-        return jsonify(context), 404
-
-@core.route("/studentapi/<int:id>", methods=["GET", "POST"])
-def studentapi(id):
-    user = User.query.filter_by(id=id).first()
-    results = StudentResult.query.filter_by(index_number=user.index_number).all()
-    results_list = []
-    print("studenting")
-    print(user)
-    print(results)
-
-    if results:
-        for result in results:
-            payload = {
-                "id": result.id,
-                "name": user.name,
-                "subject": result.subject.name,
-                "result": result.result,
-                "completed_year": result.student.completed_year,
-                "index_number": result.index_number
-                
-            }
-            results_list.append(payload)
-
-        context = {
-            "status": True,
-            "message": " result found!",
-            "data": results_list,
-        }
-
-        return jsonify(context), 200
-    else:
-        context = {
-            "status": False,
-            "message": "result not found",
-            "error": "null"
-        }
-
-        return jsonify(context), 404
+# @core.route('/discussions/new', methods=['GET', 'POST'])
+# def new_discussion():
+#     organizations = Organization.query.all()
+#     if request.method == 'POST':
+#         title = request.form.get('title')
+#         content = request.form.get('content')
+#         discussion = Discussion(title=title, content=content, organization_id=request.form.get('organization'),user_id="1")
+#         db.session.add(discussion)
+#         db.session.commit()
+#         return redirect(url_for('core.dashboard'))
+#     return render_template('portal/newdiscussion.html',organizations=organizations)
 
 
-# @core.route("/report", methods=["GET"])
+
+
+# @core.route('/discussions/<int:discussion_id>/edit', methods=['GET', 'POST'])
+# def edit_discussion(discussion_id):
+#     discussion = Discussion.query.get(discussion_id)
+#     if request.method == 'POST':
+#         discussion.title = request.form.get('title')
+#         discussion.content = request.form.get('content')
+#         db.session.commit()
+#         return redirect(url_for('list_discussions'))
+#     return render_template('edit_discussion.html', discussion=discussion)
+
+# @core.route('/discussions/<int:discussion_id>/delete', methods=['POST'])
+# def delete_discussion(discussion_id):
+#     discussion = Discussion.query.get(discussion_id)
+#     db.session.delete(discussion)
+#     db.session.commit()
+#     return redirect(url_for('list_discussions'))
+
+# # CRUD routes for discussion comments
+
+# @core.route('/discussions/<int:discussion_id>/add_comment', methods=['POST'])
+# def add_discussion_comment(discussion_id):
+#     discussion = Discussion.query.get(discussion_id)
+#     user_id = 1  # Replace with the actual user ID
+#     content = request.form.get('content')
+#     parent_comment_id = request.form.get('parent_comment_id')
+#     print(parent_comment_id)
+
+#     if parent_comment_id:
+#         parent_comment = DiscussionComment.query.get(parent_comment_id)
+#         comment = DiscussionComment(discussion=discussion, user_id=user_id, content=content, parent_comment=parent_comment)
+#     else:
+#         comment = DiscussionComment(discussion=discussion, user_id=user_id, content=content)
+
+#     db.session.add(comment)
+#     db.session.commit()
+
+#     # return redirect(url_for('core.dashboard', discussion_id=discussion_id))
+#     return redirect(url_for('core.dashboard'))
+
+
+
+# @core.route('/organization/<int:organization_id>',methods=['GET', 'POST'])
+# def organization(organization_id):
+#     # form = NewsletterSubForm()
+#     organization =  Organization.query.filter(Organization.id == organization_id).first()
+#     organization.views =int(organization.views) + 1
+#     db.session.commit()
+#     title = organization.user.name
+#     related = Organization.query.all()
+#     return render_template('portal/organization.html',issue=issue,title=title,related=related)
+
+
+# @core.route('/polls')
+# def list_polls():
+#     polls = Poll.query.all()
+#     return render_template('polls.html', polls=polls)
+
+# @core.route('/polls/<int:poll_id>')
+# def view_poll(poll_id):
+#     poll = Poll.query.get(poll_id)
+#     print('poll')
+#     print(poll)
+#     options = PollOption.query.filter_by(poll_id=poll_id).all()
+#     discussions = Discussion.query.all()
+#     polls = Poll.query.all()
+#     return render_template('portal/poll.html', poll=poll, options=options,discussions = discussions,polls=polls)
+
+# @core.route('/polls/add', methods=['GET', 'POST'])
+# def add_poll():
+#     if request.method == 'POST':
+#         question = request.form.get('question')
+#         option_texts = request.form.get('option_text')
+
+#         poll = Poll(question=question)
+#         db.session.add(poll)
+#         db.session.commit()
+
+#         for option_text in option_texts.split(','):
+#             option = PollOption(poll=poll, option_text=option_text,user_id=session['id'])
+#             db.session.add(option)
+
+#         db.session.commit()
+#         return redirect(url_for('core.dashboard'))
+
+#     return render_template('portal/newpoll.html')
+
+# @core.route('/polls/<int:poll_id>/vote/<int:option_id>')
+# def vote_poll(poll_id, option_id):
+#     user_id = session['id']  # Replace with the actual user ID
+
+#     vote = PollVote.query.filter_by(user_id=user_id, poll_id=poll_id).first()
+#     if vote:
+#         vote.option_id = option_id
+#     else:
+#         vote = PollVote(user_id=user_id, poll_id=poll_id, option_id=option_id)
+#         db.session.add(vote)
+
+#     db.session.commit()
+
+#     return redirect(url_for('core.dashboard', poll_id=poll_id))
+
+# @core.route('/favorite/<type>/<int:id>')
+# def favorite(type, id):
+#     print('favoriting')
+#     user_id = session['id']  
+#     if type =="discussion":
+#         print("favoriting discussion")
+#         iffavorite = Favorite.query.filter_by(user_id=session['id'], discussion_id=id).first()
+#         if iffavorite:
+#             db.session.delete(iffavorite)
+#         else:
+#             favorite = Favorite(user_id=user_id, likeable_id=id, likeable_type=type,discussion_id=id)
+#             db.session.add(favorite)
+#     elif type == "poll":
+#         print("favoriting poll")
+#         iffavorite = Favorite.query.filter_by(user_id=session['id'], poll_id=id).first()
+#         if iffavorite:
+#             db.session.delete(iffavorite)
+#         else:
+#             favorite = Favorite(user_id=user_id, likeable_id=id, likeable_type=type,poll_id=id)
+#             db.session.add(favorite)
+#     elif type == "issue":
+#         print("favoriting issue")
+#         iffavorite = Favorite.query.filter_by(user_id=session['id'], issue_id=id).first()
+#         if iffavorite:
+#             db.session.delete(iffavorite)
+#         else:
+#             favorite = Favorite(user_id=user_id, likeable_id=id, likeable_type=type,issue_id=id)
+#             db.session.add(favorite)
+#     elif type == "organization":
+#         print("favoriting organization")
+#         iffavorite = Favorite.query.filter_by(user_id=session['id'], organization_id=id).first()
+#         if iffavorite:
+#             db.session.delete(iffavorite)
+#         else:
+#             favorite = Favorite(user_id=user_id, likeable_id=id, likeable_type=type,organization_id=id)
+#             db.session.add(favorite)
+#     db.session.commit()
+#     return redirect(url_for('core.dashboard'))
+
+
+# @core.route('/myfavorites')
+# def myfavorites():
+#     favorites = Favorite.query.all()
+#     myfavoriteissues = Favorite.query.filter_by(user_id=session['id'],likeable_type="issue").all()
+#     myfavoritepolls = Favorite.query.filter_by(user_id=session['id'],likeable_type="poll").all()
+#     myfavoritediscussions = Favorite.query.filter_by(user_id=session['id'],likeable_type="discussion").all()
+#     print("myfavoriteissues")
+#     print(myfavoriteissues)
+#     return render_template('portal/myfavorites.html', favorites=favorites,myfavoritediscussions=myfavoritediscussions,myfavoriteissues=myfavoriteissues,myfavoritepolls=myfavoritepolls)
+
+
+# # @core.route('/discussions/<int:discussion_id>/vote/<int:option_id>')
+# # def vote_discussion(discussion_id, option_id):
+# #     user_id = 2  # Replace with the actual user ID
+
+# #     vote = Discussion.query.filter_by(user_id=user_id, discussion_id=discussion_id).first()
+# #     if vote:
+# #         vote.option_id = option_id
+# #     else:
+# #         vote = discussionVote(user_id=user_id, discussion_id=discussion_id, option_id=option_id)
+# #         db.session.add(vote)
+
+# #     db.session.commit()
+
+# #     return redirect(url_for('core.dashboard', discussion_id=discussion_id))
+
+
+# def create_like(user_id, likeable_id, likeable_type):
+#     like = LikeDislike(user_id=user_id, likeable_id=likeable_id, likeable_type=likeable_type,value=1)
+#     db.session.add(like)
+#     db.session.commit()
+
+# def create_dislike(user_id, likeable_id, likeable_type):
+#     like = LikeDislike(user_id=user_id, likeable_id=likeable_id, likeable_type=likeable_type,value=0)
+#     db.session.add(like)
+#     db.session.commit()
+
+# def get_total_likes(likeable_model, likeable_id):
+#     return LikeDislike.query.filter_by(likeable_type=likeable_model.__name__.lower(), likeable_id=likeable_id,value=1).count()
+
+# def get_total_dislikes(likeable_model, likeable_id):
+#     return LikeDislike.query.filter_by(likeable_type=likeable_model.__name__.lower(), likeable_id=likeable_id,value=0).count()
+
+
+# @core.route('/like/issue/<int:issue_id>', methods=['POST'])
 # @login_required
-# def report():
-#     return render_template("agentportal/report.html")
+# def like_issue(issue_id):
+#     iflike = LikeDislike.query.filter_by(user_id=session['id'], likeable_id=issue_id).first()
+#     if iflike:
+#         if iflike.value == 1:
+#             iflike.value = 0
+#             print('Disliked now')
+#         else:
+#             print('ALREADY LIKED')
+#     else:
+#         like = LikeDislike(user_id=session['id'], likeable_id=issue_id, likeable_type='issue',value=1,issue_id=issue_id)
+#         db.session.add(like)
+#     total_likes = get_total_likes(Issue, issue_id)
+#     total_dislikes = get_total_dislikes(Issue, issue_id)
+#     issue = issue.query.filter_by(id=issue_id).first()
+#     issue.likes = total_likes
+#     issue.dislikes = total_dislikes
+#     db.session.commit()
+#     return redirect(url_for('core.dashboard'))
+
+# @core.route('/dislike/issue/<int:issue_id>', methods=['POST'])
+# @login_required
+# def dislike_issue(issue_id):
+#     iflike = LikeDislike.query.filter_by(user_id=session['id'], likeable_id=issue_id).first()
+#     if iflike:
+#         if iflike.value == 1:
+#             iflike.value = 0
+#             print('disliked now')
+#         else:
+#             print('ALREADY DISLIKED')
+#     else:
+#         like = LikeDislike(user_id=session['id'], likeable_id=issue_id, likeable_type='issue',value=0,issue_id=issue_id)
+#         db.session.add(like)
+#     total_likes = get_total_likes(Issue, issue_id)
+#     total_dislikes = get_total_dislikes(Issue, issue_id)
+#     issue = issue.query.filter_by(id=issue_id).first()
+#     issue.likes = total_likes
+#     issue.dislikes = total_dislikes
+#     db.session.commit()
+#     return redirect(url_for('core.dashboard'))
+
+# @core.route('/like/poll/<int:poll_id>', methods=['POST'])
+# @login_required
+# def like_poll(poll_id):
+#     iflike = LikeDislike.query.filter_by(user_id=session['id'], likeable_id=poll_id).first()
+#     if iflike:
+#         if iflike.value == 0:
+#             iflike.value = 1
+#             print('liked now')
+#         else:
+#             print('ALREADY LIKED')
+#     else:
+#         like = LikeDislike(user_id=session['id'], likeable_id=poll_id, likeable_type='poll',value=1,poll_id=poll_id)
+#         db.session.add(like)
+#     total_likes = get_total_likes(Poll, poll_id)
+#     total_dislikes = get_total_dislikes(Poll, poll_id)
+#     poll = poll.query.filter_by(id=poll_id).first()
+#     poll.likes = total_likes
+#     poll.dislikes = total_dislikes
+#     db.session.commit()
+#     return redirect(url_for('polls.view_poll', poll_id=poll_id))
+
+# @core.route('/dislike/poll/<int:poll_id>', methods=['POST'])
+# @login_required
+# def dislike_poll(poll_id):
+#     iflike = LikeDislike.query.filter_by(user_id=session['id'], likeable_id=poll_id).first()
+#     if iflike:
+#         if iflike.value == 1:
+#             iflike.value = 0
+#             print('Disliked now')
+#         else:
+#             print('ALREADY DISLIKED')
+#     else:
+#         like = LikeDislike(user_id=session['id'], likeable_id=poll_id, likeable_type='poll',value=0,poll_id=poll_id)
+#         db.session.add(like)
+#     total_likes = get_total_likes(Poll, poll_id)
+#     total_dislikes = get_total_dislikes(Poll, poll_id)
+#     poll = poll.query.filter_by(id=poll_id).first()
+#     poll.likes = total_likes
+#     poll.dislikes = total_dislikes
+#     db.session.commit()
+#     return redirect(url_for('core.dashboard', poll_id=poll_id))
+
+# @core.route('/like/discussion/<int:discussion_id>', methods=['POST','GET'])
+# @login_required
+# def like_discussion(discussion_id):
+#     iflike = LikeDislike.query.filter_by(user_id=session['id'], likeable_id=discussion_id).first()
+#     if iflike:
+#         if iflike.value == 0:
+#             iflike.value = 1
+#             print('Liked now')
+#         else:
+#             print('ALREADY LIKED')
+#     else:
+#         like = LikeDislike(user_id=session['id'], likeable_id=discussion_id, likeable_type='discussion',value=1,discussion_id=discussion_id)
+#         db.session.add(like)
+#     total_likes = get_total_likes(Discussion, discussion_id)
+#     total_dislikes = get_total_dislikes(Discussion, discussion_id)
+#     discussion = Discussion.query.filter_by(id=discussion_id).first()
+#     discussion.likes = total_likes
+#     discussion.dislikes = total_dislikes
+#     db.session.commit()
+
+#     return redirect(url_for('core.dashboard', discussion_id=discussion_id))
+
+# @core.route('/dislike/discussion/<int:discussion_id>', methods=['POST','GET'])
+# @login_required
+# def dislike_discussion(discussion_id):
+#     iflike = LikeDislike.query.filter_by(user_id=session['id'], likeable_id=discussion_id).first()
+#     if iflike:
+#         if iflike.value == 1:
+#             iflike.value = 0
+#             print('Disliked now')
+#         else:
+#             print('ALREADY DISLIKED')
+#     else:
+#         like = LikeDislike(user_id=session['id'], likeable_id=discussion_id, likeable_type='discussion',value=0,discussion_id=discussion_id)
+#         db.session.add(like)
+#     total_likes = get_total_likes(Discussion, discussion_id)
+#     total_dislikes = get_total_dislikes(Discussion, discussion_id)
+#     discussion = Discussion.query.filter_by(id=discussion_id).first()
+#     discussion.likes = total_likes
+#     discussion.dislikes = total_dislikes
+#     db.session.commit()
+#     return redirect(url_for('core.dashboard', discussion_id=discussion_id))
+
+# # @core.route('/dislike/discussion/<int:discussion_id>', methods=['POST','GET'])
+# # @login_required
+# # def dislike_discussion(discussion_id):
+# #     like = LikeDislike(user_id=session['id'], likeable_id=discussion_id, likeable_type='discussion',value=0,discussion_id=discussion_id)
+# #     db.session.add(like)
+# #     db.session.commit()
+# #     return redirect(url_for('core.dashboard', discussion_id=discussion_id))
+
+# # @core.route('/food', methods=['POST'])
+# # def food():
+# #     # Get the uploaded file
+# #     image = request.files['file']
+# #     # Save the image temporarily
+# #     image_path = 'temp.png'
+# #     image.save(image_path)
+# #     # Use pytesseract to extract text
+# #     extracted_text = pytesseract.image_to_string(Image.open(image_path))
+# #     print(extracted_text)
+
+# #     # Now, you can process the extracted_text and store it in your database
+
+# #     # Clean up: delete the temporary image
+# #     os.remove(image_path)
+
+# #     return render_template('result.html', text=extracted_text)
 
 
+# def encode_image(image_path):
+#     with open(image_path, "rb") as image_file:
+#         return base64.b64encode(image_file.read()).decode('utf-8')
 
-@core.route('/', methods=['GET', 'POST'])
-# @require_api_key
-def requestsip():
-    form = SipRequestForm()
-    user = User.query.filter_by(id=session['id']).first()
-    
-    if request.method =="POST":
-        if request.files.get('certificate'):
-            image1 = photos.save(request.files['certificate'], name=secrets.token_hex(10) + ".")
-            image1= "static/images/certificates/"+image1
-            print("image1")
-            print(image1)
-        else:
-            image1 = "static/images/noimage.JPG"
-        siprequest = SipRequest(
-            channels=form.channels.data,
-            other=form.other.data,
-            codecs=form.codecs.data,
-            certificate = image1,
-            inbound = form.inbound.data,
-            outbound = form.outbound.data,
-            provider = form.provider.data     
-        )
-        db.session.add(siprequest)
-        db.session.commit()      
-        connex_username = 'raymond@delaphonegh.com'
-        connex_password = 'Passw0rd@100'
-        # Create a new customer using Connex CS API
-        customer_data = {
-            "name": "test name",  # You can modify this as per your requirement
-            "portal_access": "yes",
-            "channels": siprequest.channels,
-            "portal_username": "testmail@xyz.com",
-            "portal_password":"testmail@xyz.com"
+# @core.route("/meu", methods=['GET', 'POST'])
+# # @login_required
+# def menu():
+#     form = AboutForm()
+#     if request.method =='POST':
+# # Open the manipulated image
+#         img = request.files.get('images')
+#         # pytesseract.pytesseract.tesseract_cmd = os.path.join(os.getcwd(), 'venv', 'Scripts', 'tesseract.exe')
+#         # filename = secure_filename(img.filename)
+#                 # file.save(photos.config['UPLOADED_PHOTOS_DEST'] + '/' + filename)
+#         image_path = os.path.join(app.config['UPLOADED_PHOTOS_DEST'], img.filename)
+#         # return img.filename
+#         img.save(image_path)
+#         print(image_path)
 
-                
-                    # You can modify this as per your requirement
-            # Include other customer data fields as needed
-        }
-        headers = {
-            
-            "Content-Type": "application/json"
-        }
-        # create_customer_response = requests.post(
-        #     "https://app.connexcs.com/api/cp/customer",
-        #     json=customer_data,
-        #     headers=headers
-        # )
-        create_customer_response = requests.post(
-            "https://app.connexcs.com/api/cp/customer",
-            json=customer_data,
-            headers=headers,
-            auth=HTTPBasicAuth(connex_username, connex_password)
-        )
-        create_customer_response_data = create_customer_response.json()
-        print(create_customer_response_data)
+#         img_byte_array = BytesIO()
+#         # img.save(img_byte_array, format='PNG')
+#         img_base64 = base64.b64encode(img_byte_array.getvalue()).decode('utf-8')
+#         base64_image = encode_image(image_path)
+#         # Send the image to the ChatGPT API
+#         api_url = 'https://api.openai.com/v1/chat/completions'
+#         api_key = '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'
+#         headers = {
+#             'Authorization': f'Bearer {api_key}',
+#             'Content-Type': 'application/json'
+#         }
+#         payload = {
+#             "model": "gpt-4-vision-preview",
+#             "messages": [
+#                 {
+#                     "role": "system",
+#                     "content": [
+#                         {
+#                             "type": "text",
+#                             "text": "Extract all menu items, categories, and prices as a list ."
+#                         },
+#                         {
+#                             "type": "image_url",
+#                             "image_url": {
+#                                 "url": f"data:image/jpeg;base64,{base64_image}"
+#                                 # "url": "https://images.twinkl.co.uk/tw1n/image/private/t_630_eco/image_repo/4f/a5/au-t-2577-cafe-menus-australia_ver_2.jpg"
+
+#                             }
+#                         }
+#                     ]
+#                 }
+#             ],
+#             "max_tokens": 300
+#         }
+
+#         response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+#         response_data = response.json()
+
+#         if 'error' in response_data:
+#             print(f"Error: {response_data['error']}")
         
-        # Create a SIP user for the new customer using Connex CS API
-        sip_user_data = {
-            "username": "testmail@xyz.com",  # You can modify this as per your requirement
-            "customer_id": create_customer_response_data["id"],
-            # Include other SIP user data fields as needed
-        }
-        create_sip_user_response = requests.post(
-            "https://app.connexcs.com/api/cp/switch/user",
-            json=sip_user_data,
-            headers=headers,
-            auth=HTTPBasicAuth(connex_username, connex_password)
-        )
-        print(create_sip_user_response)
-     
-        return render_template("viewresult.html",user=user)
+#         # Parse the ChatGPT API response
+#         menu_items = []
 
+#         for message in response_data['choices'][0]['message']['content'].split('\n'):
+#             # Assuming each line in the response contains an item, category, and price separated by commas
+#             item_data = message.split(',')
+#             menu_items.append(item_data)
+#             print(item_data)
 
+#         return render_template('menu.html', menu_items=menu_items)
 
-    return render_template("index.html",form=form)
+#         # Use a more informative prompt
+#         # prompt = 'Extract all menu items, categories, and prices from the menu image.'
 
+#         # data = {
+#         #     'messages': [{'role': 'system', 'content': 'You are a helpful assistant.'}],
+#         #     'file': img_base64,
+#         #     'prompt': prompt,
+#         #     'model': 'text-davinci-003'
+#         # }
 
+#         # response = requests.post(api_url, json=data, headers=headers)
+#         # response_data = response.json()
+#         # if 'error' in response_data:
+#         #     print(f"Error: {response_data['error']}")
+#         # print(response)
+#         # keys = response_data.keys()
+#         # print(keys)
 
+#         # # Parse the ChatGPT API response
+#         # menu_items = []
 
-@core.route('/newsiprequestapi', methods=['POST'])
-def newsiprequest():
-    print("request")
-    print(request)
-    password = generate_secure_password()
- 
-    if request.method == 'POST':
-        # if request.files.get('certificate'):
-        #     image1 = photos.save(request.files['certificate'], name=secrets.token_hex(10) + ".")
-        #     image1= "static/images/certificates/"+image1
-        #     print("image1")
-        #     print(image1)
-        # else:
-        #     image1 = "static/images/noimage.JPG"
+#         # for message in response_data['choices'][0]['message']['content'].split('\n'):
+#         #     # Assuming each line in the response contains an item, category, and price separated by commas
+#         #     item_data = message.split(',')
+#         #     menu_items.append(item_data)
+#         #     print(item_data)
+#         # return(menu_items)
+#     return render_template('menu.html', form=form)
 
-        form_data = request.form.to_dict()
-        name = form_data.get('fields[name][value]')
-        email = form_data.get('fields[email][value]')
-        message = form_data.get('fields[message][value]')
-        channels = form_data.get('fields[field_53cf759][value]')
-        provider = form_data.get('fields[field_6716889][value]')
-        inbound_calls = form_data.get('fields[field_c974d69][value]')
-        outbound_calls = form_data.get('fields[field_8fa2d33][value]')
-        ip= form_data.get('fields[field_0c54e34][value]')
-        certificate =  form_data.get('fields[field_daeacb9][value]')
-        print(name)
-        print(request)
-        print(request.args)
-        print(request.form)
-        print("name")
-        print(request.args.get('name'))
-        print(request.form.get('name'))
+# @app.route("/menu2", methods=['GET', 'POST'])
+# def menu2():
+#     form = AboutForm()
+#     if request.method == 'POST':
+#         img = request.files.get('images')
+#         image_path = os.path.join(app.config['UPLOADED_PHOTOS_DEST'], img.filename)
+#         img.save(image_path)
+
+#         # Encode the image to base64
+#         base64_image = encode_image(image_path)
+
+#         # Send the image to the GPT-4 Vision API
+#         api_url = 'https://api.openai.com/v1/chat/completions'
+#         headers = {
+#             'Authorization': f'Bearer {"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"}',
+#             'Content-Type': 'application/json'
+#         }
+
+#         payload = {
+#             "model": "gpt-4-vision-preview",
+#             "messages": [
+#                 {
+#                     "role": "user",
+#                     "content": [
+#                         {
+#                             "type": "text",
+#                             "text": "Extract all menu items, categories, and prices as a list .Eg Food Name, Price, Category/Type"
+#                         },
+#                         {
+#                             "type": "image_url",
+#                             "image_url": {
+#                                 "url": f"data:image/jpeg;base64,{base64_image}"
+#                             }
+#                         }
+#                     ]
+#                 }
+#             ],
+#             "max_tokens": 300
+#         }
+
+#         response = requests.post(api_url, headers=headers, json=payload)
+#         response_data = response.json()
+
+#         if 'error' in response_data:
+#             print(f"Error: {response_data['error']}")
         
-        
-        customer_data = {
-            "name": name,
-            "portal_access": "yes",
-            "channels": channels,
-            "portal_username": email,
-            "portal_password": password,
-            "portal_url": "portal.delaphonegh.com" ,
-            "portal_access":"yes",
-            "is_customer":"yes",
-            "currency":"GHS"
-
-            # Include other customer data fields as needed
-        }
-        
-        headers = {
-            "Content-Type": "application/json"
-        }
-        
-        create_customer_response = requests.post(
-            "https://app.connexcs.com/api/cp/customer",
-            json=customer_data,
-            headers=headers,
-            auth=HTTPBasicAuth(connex_username, connex_password)
-        )
-        
-        create_customer_response_data = create_customer_response.json()
-        print("create_customer_response_data")
-        print(create_customer_response_data)
-
-
-        
-        contact_data = {
-            "name":name,
-            "contact_type":"General",
-            "email": email,
-              "password":customer_data['portal_password'],
-              "company_id": create_customer_response_data["id"],
-            # Include other SIP user data fields as needed
-        }
-        
-        create_contact = requests.post(
-            "https://app.connexcs.com/api/cp/contact",
-            json=contact_data,
-            headers=headers,
-            auth=HTTPBasicAuth(connex_username, connex_password)
-        )
-        print("contact info")
-        print(create_contact.content)
-        sip_request = SipRequest(
-            channels = channels,
-            other = message,
-            codecs = channels,
-            inbound = inbound_calls,
-            outbound = outbound_calls,
-            provider = provider,
-            name = name,
-            email = email,
-            customer_id = create_customer_response_data["id"],
-            certificate = certificate,
-            ip = ip 
-
-        )
-        
-        db.session.add(sip_request)
-        db.session.commit()
-        msg = Message(
-        sender = "info@delaphonegh.com",
-        subject="Delaphone Portal Information",
-        recipients=[sip_request.email],
-        # recipients=['raymondvaughanwilliams@gmail.com'],
-        # html="<p>Package has been created.<p>Details:<br><ul><li>Item:{}</li><li>Sender Location:{}</li><li>Destination:{}</li><li>Price:{}</li><li>Start Date:{}</li><li>End Date:{}</li></ul>".format( form.item_description.data,  delivery.sender_location.name,delivery.sender_location.name,delivery.price,form.start_date.data,form.end_date.data)
-        html= render_template('mails/welcome.html', sip_request=sip_request,password=password )
-
-        )
-        mail.send(msg)
-        print("sent welcome message")
-        msg = Message(
-        sender = "info@delaphonegh.com",
-        subject="New Client ",
-        recipients=['raymond@delaphonegh.com'],
-        # recipients=['raymondvaughanwilliams@gmail.com'],
-        # html="<p>Package has been created.<p>Details:<br><ul><li>Item:{}</li><li>Sender Location:{}</li><li>Destination:{}</li><li>Price:{}</li><li>Start Date:{}</li><li>End Date:{}</li></ul>".format( form.item_description.data,  delivery.sender_location.name,delivery.sender_location.name,delivery.price,form.start_date.data,form.end_date.data)
-        html= render_template('mails/newcustomer.html', sip_request=sip_request)
-
-        )
-        mail.send(msg)
-        context = {
-            "status": True,
-            "message": " Customer Created!",
-        }
-
-        return 200
-        # return jsonify({"message": "Success"})
-    
-    return "Welcome to the SIP Request API"
-
-
-
-
-
-
-
-@core.route("/siprequestsapi", methods=["GET", "POST"])
-def siprequestsapi():
-    siprequests = SipRequest.query.all()
-    siprequest_list = []
-
-    if siprequests:
-        for siprequest in siprequests:
-            payload = {
-                "id": siprequest.id,
-                "channels": siprequest.channels,
-                "inbound": siprequest.inbound,
-                "outbound": siprequest.outbound,
-                "codecs": siprequest.codecs,
-                "provider": siprequest.provider,
-                "other":siprequest.other,
-                "certificate":siprequest.certificate,
-                "status":siprequest.status,
-                "ip":siprequest.ip
-             
-            }
-            siprequest_list.append(payload)
-
-        context = {
-            "status": True,
-            "message": " siprequest found!",
-            "data": siprequest_list,
-        }
-
-        return jsonify(context), 200
-    else:
-        context = {
-            "status": False,
-            "message": "siprequest not found",
-            "error": "null"
-        }
-
-        return jsonify(context), 404
-
-
-
-
-@core.route("/siprequestapi/<int:id>", methods=["GET", "POST"])
-def siprequestapi(id):
-    user = User.query.filter_by(id=id).first()
-    results= SipRequest.query.filter_by(id=id).all()
-    results_list = []
-    print("siprequesting")
-    print(user)
-    print(results)
-
-    if results:
-        for result in results:
-            payload = {
-                "id": result.id,
-                "channel": result.channels,
-                "codecs": result.codecs.name,
-                "inbound": result.inbound,
-                "outbound": result.outbound,
-                "provider":result.provider,
-                "status":result.status
-                
-            }
-            results_list.append(payload)
-
-        context = {
-            "status": True,
-            "message": " result found!",
-            "data": results_list,
-        }
-
-        return jsonify(context), 200
-    else:
-        context = {
-            "status": False,
-            "message": "result not found",
-            "error": "null"
-        }
-
-        return jsonify(context), 404
-
-
-
-
-@core.route("/siprequests", methods=["GET", "POST"])
-@login_required
-def siprequests():
-    form = FilterForm()
-    page = request.args.get('page', 1, type=int)
-    siprequests = SipRequest.query.all()
-
-
-    
-    return render_template(
-        "agentportal/siprequests.html",
-        siprequests=siprequests,
-        form=form, page=page,
-        
-    )
-
-
-
-@core.route("/customers", methods=["GET", "POST"])
-@login_required
-def customers():
-    form = FilterForm()
-    page = request.args.get('page', 1, type=int)
-    customers = SipRequest.query.all()
-
-
-    
-    return render_template(
-        "agentportal/customers.html",
-        
-        form=form, page=page,
-        
-    )
-
-@core.route("/editsiprequest/<int:id>", methods=["POST", 'GET'])
-@login_required
-def editsiprequest(id):
-    form = SipRequestForm()
-    result = SipRequest.query.filter_by(id=id).first()
-    password= generate_secure_password()
-    random_number = random.randint(1, 10) 
-    if request.method == "POST":
-        print('in post')
-        result.channels = form.channels.data
-        # result.subject = form.subject.data
-        result.codecs = form.codecs.data
-        result.provider = form.provider.data
-        result.status = form.status.data
-        result.ip = form.ip.data
-   
-
-        db.session.commit()
-   
-        
-
-        company_id = result.customer_id
-        card_id = form.ratecard.data
-        print(company_id)
-        api_url = f'https://app.connexcs.com/api/cp/routing'
-        params = {
-            'company_id': company_id,
-            'card_id': card_id
-        }
-        headers = {
-            'Content-Type': 'application/json'
-        }
-
-        response = requests.post(api_url, params=params, headers=headers, auth=HTTPBasicAuth(connex_username, connex_password))
-        routing_info = response.json() if response.status_code == 200 else {}
-        print('routing_info')
-        print(routing_info)
-        print(response.content)
-
-        if form.status.data == 'verified' and form.create_extension.data=='yes':
-            print('Creating new extension for user...')
-
-            headers = {
-                "Content-Type": "application/json"
-            }
-            
-            extension_data = {
-                "username":result.name + str(random_number) ,
-                "password":password,
-                "channels": result.channels,
-                "ip_whitelist":result.ip,
-                "company_id": result.customer_id,
-                # Include other SIP user data fields as needed
-            }
-            
-            create_extension = requests.post(
-                "https://app.connexcs.com/api/cp/switch/user",
-                json=extension_data,
-                headers=headers,
-                auth=HTTPBasicAuth(connex_username, connex_password)
-            )
-            print("contact info")
-            print(create_extension.content)
-
-            
-
-            # extension = Extension(
-            # password=form.password.data,
-            # channels=result.channels,
-            # ip_whitelist=result.ip,
-            # company_id = result.customer_id,
-            # siprequest_id = result.siprequest_id,
-            # )
-            # db.session.add(extension)
-            # db.session.commit() 
-
-            return redirect(url_for("core.siprequests"))
-        else:
-            return redirect(url_for("core.siprequests"))
-
-    # elif request.method == 'GET':
-    #     form.name.data = result.name
-    #     form.subject.data = result.subject
-    #     form.result.data = result.result
-      
-
-    return render_template("agentportal/siprequests.html", result=result, form=form)
-
-
-#EMERGENT/CE AIRTIME API
-
-#API URLS. USE Variables cos you have to change them later  https://testsrv.interpayafrica.com/v7/Airtime.svc
-EMERGENCE_API_URL = 'https://testsrv.interpayafrica.com/v7/Airtime.svc/topup'
-EMERGENCE_API_URL_MOMO = 'https://testsrv.interpayafrica.com/v7/Airtime.svc/topupbymm'
-EMERGENCE_API_URL_BANK = 'https://testsrv.interpayafrica.com/v7/Airtime.svc/topupbybankacct'
-
-#Any payment platform? 
-def perform_any_request(form_data):
-    print(form_data)
-    print(form_data['type'])
-    topup_params = {
-        'app_id': APP_ID,
-        'app_key': APP_KEY,
-        'payername': form_data['payername'],
-        'payermobile': form_data['payermobile'],
-        'payeremail': form_data.get('payeremail'),
-        'recipientmobile': form_data['recipientmobile'],
-        'amount': form_data['amount'],
-        'merchtxnref': form_data['merchtxnref'],
-        'countryid': form_data['countryid'],
-        'oprid': form_data['oprid']
-    }
-    
-    response = requests.post(EMERGENCE_API_URL, json=topup_params)
-    print("response")
-    print(response.content)
-    if response.status_code == 200:
-        response_data = response.json()
-        return response_data
-    else:
-        return {"error": "API request failed"}
-
-#Momo payments
-def perform_momo_request(form_data):
-    momo_params = {
-        'app_id': form_data['app_id'],
-        'app_key': form_data['app_key'],
-        'payername': form_data['payername'],
-        'payermobile': form_data['payermobile'],
-        'payeremail': form_data.get('payeremail'),
-        'payercountryid': form_data['payercountryid'],
-        'payeroprid': form_data['payeroprid'],
-        'recipientmobile': form_data['recipientmobile'],
-        'vouchernumber': form_data.get('vouchernumber'),
-        'amount': form_data['amount'],
-        'merchtxnref': form_data['merchtxnref']
-    }
-    
-    response = requests.post(EMERGENCE_API_URL_MOMO, data=momo_params)
-    
-    if response.status_code == 200:
-        response_data = response.json()
-        return response_data
-    else:
-        return {"error": "API request failed"}
-    
-#Bank topups
-def perform_bank_topup_request(form_data):
-    bank_topup_params = {
-        'app_id': APP_ID,
-        'app_key': APP_KEY,
-        'payername': form_data['payername'],
-        'payermsisdn': form_data.get('payermsisdn'),
-        'payeremail': form_data.get('payeremail'),
-        'payerbankacctno': form_data['payerbankacctno'],
-        'payerbankaccttitle': form_data['payerbankaccttitle'],
-        'bankbranchsortcode': form_data['bankbranchsortcode'],
-        'recipientmsisdn': form_data['recipientmsisdn'],
-        'amount': form_data['amount'],
-        'merchtxnref': form_data['merchtxnref'],
-        'countryid': form_data['countryid'],
-        'oprid': form_data['oprid']
-    }
-    
-    response = requests.post(EMERGENCE_API_URL_BANK, data=bank_topup_params)
-    
-    if response.status_code == 200:
-        response_data = response.json()
-        return response_data
-    else:
-        return {"error": "API request failed"}
-
-
-#Topup route/api
-@core.route('/api/topup', methods=['POST'])
-def topup_route():
-    if request.method == 'POST':
-        if 'type' in request.form:
-            if request.form['type'] == 'topup':
-                response = perform_any_request(request.form)
-                return jsonify(response)
-            elif request.form['type'] == 'momo':
-                response = perform_momo_request(request.form)
-                return jsonify(response)
-            elif request.form['type'] == 'bank':
-                response = perform_momo_request(request.form)
-                return jsonify(response)
-            else:
-                return jsonify({"error": "Invalid type value"})
-            # airtimetopup = AirtimeTopup(payername)
-        else:
-            return jsonify({"error": "Missing type field"})
-    else:
-        return jsonify({"error": "Method not allowed"})
-
-
-
-from datetime import datetime
-
-@core.route('/api/cdr', methods=['POST'])
-def cdrapi():
-    print("request")
-    print(request)
-    password = generate_secure_password()
- 
-    if request.method == 'POST':
-        # if request.files.get('certificate'):
-        #     image1 = photos.save(request.files['certificate'], name=secrets.token_hex(10) + ".")
-        #     image1= "static/images/certificates/"+image1
-        #     print("image1")
-        #     print(image1)
-        # else:
-        #     image1 = "static/images/noimage.JPG"
-        data = request.json
-        date_time = datetime.strptime(data.get('DateTime'), '%Y-%m-%dT%H:%M:%S')
-        call_start_time_local = datetime.strptime(data.get('CallStartTimeLocal'), '%Y-%m-%dT%H:%M:%S')
-        call_start_time_utc = datetime.strptime(data.get('CallStartTimeUTC'), '%Y-%m-%dT%H:%M:%S')
-        call_established_time_local = datetime.strptime(data.get('CallEstablishedTimeLocal'), '%Y-%m-%dT%H:%M:%S')
-        call_established_time_utc = datetime.strptime(data.get('CallEstablishedTimeUTC'), '%Y-%m-%dT%H:%M:%S')
-        call_end_time_local = datetime.strptime(data.get('CallEndTimeLocal'), '%Y-%m-%dT%H:%M:%S')
-        call_end_time_utc = datetime.strptime(data.get('CallEndTimeUTC'), '%Y-%m-%dT%H:%M:%S')
-
-
-        call_type = request.json.get('CallType')
-        number = request.json.get('Number')
-        call_direction = request.json.get('CallDirection')
-        name = request.json.get('Name')
-        entity_id = request.json.get('EntityId')
-        entity_type = request.json.get('EntityType')
-        queue_extension = request.json.get('QueueExtension')
-        agent = request.json.get('Agent')
-        agent_first_name = request.json.get('AgentFirstName')
-        agent_last_name = request.json.get('AgentLastName')
-        agent_email = request.json.get('AgentEmail')
-        duration = request.json.get('Duration')
-        duration_timespan = request.json.get('DurationTimespan')
-        # ... (Retrieve other fields using request.json.get)
-        print(request.json)
-
-        cdr = CDR(
-            call_type=call_type,
-            number=number,
-            call_direction=call_direction,
-            name=name,
-            entity_id=entity_id,
-            entity_type=entity_type,
-            queue_extension=queue_extension,
-            agent=agent,
-            agent_first_name=agent_first_name,
-            agent_last_name=agent_last_name,
-            agent_email=agent_email,
-            duration=duration,
-            duration_timespan=duration_timespan,
-            # ... (Assign other fields)
-            date_time=date_time,
-            call_start_time_local=call_start_time_local,
-            call_start_time_utc=call_start_time_utc,
-            call_established_time_local=call_established_time_local,
-            call_established_time_utc=call_established_time_utc,
-            call_end_time_local=call_end_time_local,
-            call_end_time_utc=call_end_time_utc,
-            call_start_time_local_millis=request.json.get('CallStartTimeLocalMillis'),
-            call_start_time_utc_millis=request.json.get('CallStartTimeUTCMillis'),
-            call_established_time_local_millis=request.json.get('CallEstablishedTimeLocalMillis'),
-            call_established_time_utc_millis=request.json.get('CallEstablishedTimeUTCMillis'),
-            call_end_time_local_millis=request.json.get('CallEndTimeLocalMillis'),
-            call_end_time_utc_millis=request.json.get('CallEndTimeUTCMillis'),
-            subject=request.json.get('Subject'),
-            inbound_call_text=request.json.get('InboundCallText'),
-            missed_call_text=request.json.get('MissedCallText'),
-            outbound_call_text=request.json.get('OutboundCallText'),
-            not_answered_outbound_call_text=request.json.get('NotAnsweredOutboundCallText')
-   
-        )
-
-        db.session.add(cdr)
-        db.session.commit()
-
-        return jsonify({"message": "CDR saved successfully."})
-        
-        # context = {
-        #     "status": True,
-        #     "message": " CDR saved successfully",
-        # }
-
-        # return 200
-        # # return jsonify({"message": "Success"})
-    
-    return "Welcome to the SIP Request API"
-
-
-
-
-@core.route('/contact_lookup', methods=['GET'])
-# @require_api_key
-def contactlookup():
-   
-    number = request.args.get('phone_mobile')
-    print(request.args.get('phone_mobile'))
-    
-    print(number)
-    if(request.args.get('phone_mobile')):
-        number = number.strip().replace("'","")
-        contact = Contact.query.filter_by(phone_mobile=number).first()
-        
-    elif(request.args.get('email')):
-        contact = Contact.query.filter_by(email=request.args.get('email')).first()
-    else:
-        contact  = None
-    contacts = Contact.query.all()
-    print(contact)
-    print(contacts)
-    if contact is not None:
-        
-        # ecom_request = EcomRequest(
-        #     number=number,
-        #     farmer_id=farmer.id,
-        #     disposition="200",
-        #     sms_disposition=res[0]
-        # )
-
-        # db.session.add(ecom_request)
-        # db.session.commit()
-        print('contact exists')
-        payload = {
-            'id': contact.id,
-            "True": True,
-            "firstName": contact.first_name,
-            "lastName": contact.last_name,
-            "phone_mobile": contact.phone_mobile,
-            "email":contact.email
-        }
-
-        context = {
-            "status": True,
-            "message": " Contact found",
-            "data": payload
-        }
-        return jsonify(context), 200
-
-    else:
-        print('contact doesnt exist')
-        # ecom_request = EcomRequest(
-        #     number=number,
-        #     farmer_id=None,
-        #     disposition="404",
-        #     sms_disposition="No sms sent",
-        # )
-
-        # db.session.add(ecom_request)
-        # db.session.commit()
-        context = {
-            "status": False,
-            "message": "Contact not found",
-            "error": "null"
-        }
-
-        return jsonify(context), 404
-
-
-# scheduler = BackgroundScheduler()
-# scheduler.add_job(func=resend_sms, trigger="interval", seconds=600)
-# scheduler.start()
-# atexit.register(lambda: scheduler.shutdown())
+#         # Parse the GPT-4 Vision API response
+#         menu_items = response_data.get('choices', [])
+#         print(menu_items)
+#         # # Parse the ChatGPT API response
+#         menu_items = []
+
+#         for message in response_data['choices'][0]['message']['content'].split('\n'):
+#             # Assuming each line in the response contains an item, category, and price separated by commas
+#             item_data = message.split(',')
+#             menu_items.append(item_data)
+#             print(item_data)
+#         # return(menu_items)
+#         return render_template('menu.html', menu_items=menu_items)
+
+#     return render_template('menu.html', form=form)

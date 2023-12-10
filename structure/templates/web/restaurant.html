@@ -1,0 +1,293 @@
+{% extends "web/base.html" %}
+{% block content %}
+
+    
+
+
+    <!-- Content ================================================== -->
+    <div class="container margin_60_35">
+        <div class="row">
+            <div class="col-lg-4">
+             
+                <div class="box_style_2">
+                    <h4 class="nomargin_top">{{restaurant.name}} </h4>
+                    <ul class="opening_list">
+                        <li>{{restaurant.bio}}</li>
+                        <li>{{restaurant.location}}</li>
+                        <li>  <a href="tel://{{restaurant.contact}}" class="phone">{{restaurant.contact1}}</a></li>
+                        <li><small>Monday to Friday 9.00am - 7.30pm</small></li>
+                        <li>{{restaurant.views}} <span class="label label-danger">Views</span></li>
+                       
+                    </ul>
+                </div>
+                <div class="box_style_2 d-none d-sm-block" id="help">
+                    <i class="icon_lifesaver"></i>
+                    <h4>Need <span>Help?</span></h4>
+                    <a href="tel://004542344599" class="phone">+45 423 445 99</a>
+                    <small>Monday to Friday 9.00am - 7.30pm</small>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <div class="box_style_2">
+                    <h2 class="inner">MENU</h2>
+                    
+{%if foods %}
+                    <table class="table table-striped cart-list">
+                        <h3 id="main_courses">Starters</h3>
+
+                        <thead>
+                            <tr>
+                                <th>
+                                    Item
+                                </th>
+                                <th>
+                                    Price
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if foods|selectattr('category_id', 'equalto', 1)|list %}
+                            {% for food in foods %}
+                                {% if food.category_id == 1 %}
+                                    <tr>
+                                        <td>
+                                            <figure class="thumb_menu_list"><img src="/static/quickfood/img/menu-thumb-1.jpg" alt="thumb"></figure>
+                                            <h5>{{ food.name }}</h5>
+                                        </td>
+                                        <td>
+                                            <strong>{{ food.price }}</strong>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="2">No starters available on this menu</td>
+                            </tr>
+                        {% endif %}
+                            
+                        </tbody>
+                    </table>
+                    <hr>
+                    <h3 id="main_courses">Main courses</h3>
+                    <p>
+                        Te ferri iisque aliquando pro, posse nonumes efficiantur in cum. Sensibus reprimique eu pro. Fuisset mentitum deleniti sit ea.
+                    </p>
+                    <table class="table table-striped cart-list ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Item
+                                </th>
+                                <th>
+                                    Price
+                                </th>
+                           
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if foods|selectattr('category_id', 'equalto', 2)|list %}
+                            {%for food in foods%}
+                            {% if food.category_id ==2%}
+                            <tr>
+                                <td>
+                                    <figure class="thumb_menu_list"><img src="/static/quickfood/img/menu-thumb-5.jpg" alt="thumb"></figure>
+                                    <h5>{{food.name}}</h5>
+                                 
+                                </td>
+                                <td>
+                                    <strong>{{food.price}}</strong>
+                                </td>
+                              
+                            </tr>
+                            {%endif%}
+                            {%endfor%}
+                            {% else %}
+                            <tr>
+                                <td colspan="2">No Mains available on this menu</td>
+                            </tr>
+                        {% endif %}
+                        </tbody>
+                    </table>
+                    <hr>
+                    <h3 id="desserts">Desserts</h3>
+                    <p>
+                        Te ferri iisque aliquando pro, posse nonumes efficiantur in cum. Sensibus reprimique eu pro. Fuisset mentitum deleniti sit ea.
+                    </p>
+                    <table class="table table-striped cart-list ">
+                        <thead>
+                            <tr>
+                                <th>
+                                  Food
+                                </th>
+                                <th>
+                                   Price
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if foods|selectattr('category_id', 'equalto', 3)|list %}
+                            {%for food in foods%}
+                            {% if food.category_id ==3%}
+                            <tr>
+                                <td>
+                                    <figure class="thumb_menu_list"><img src="/static/quickfood/img/menu-thumb-17.jpg" alt="thumb"></figure>
+                                    <h5>{{food.name}}</h5>
+                                  
+                                </td>
+                                <td>
+                                    <strong>{{food.price}}</strong>
+                                </td>
+                             
+                            </tr>
+                            {%endif%}
+                            {%endfor%}
+                            {% else %}
+                            <tr>
+                                <td colspan="2">No Desserts available on this menu</td>
+                            </tr>
+                        {% endif %}
+                        </tbody>
+                    </table>
+                    <hr>
+                    <h3 id="drinks">Drinks</h3>
+                    <p>
+                        Te ferri iisque aliquando pro, posse nonumes efficiantur in cum. Sensibus reprimique eu pro. Fuisset mentitum deleniti sit ea.
+                    </p>
+                    <table class="table table-striped cart-list ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Item
+                                </th>
+                                <th>
+                                    Price
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if foods|selectattr('category_id', 'equalto', 4)|list %}
+                            {%for food in foods%}
+                            {% if food.category_id ==4%}
+                            <tr>
+                                <td>
+                                    <figure class="thumb_menu_list"><img src="/static/quickfood/img/menu-thumb-21.jpg" alt="thumb"></figure>
+                                    <h5>{{food.name}}</h5>
+                                
+                                </td>
+                                <td>
+                                    <strong>{{food.price}}</strong>
+                                </td>
+                             
+                            </tr>
+                            {%endif%}
+                            {%endfor%}
+                            {% else %}
+                            <tr>
+                                <td colspan="2">No Drinks available on this menu</td>
+                            </tr>
+                        {% endif %}
+                        </tbody>
+                    </table>
+                    {%else%}
+                    <h2>No items on this menu</h2>
+                    {%endif%}
+                    
+              <!-- End box_style_1 -->
+      
+                       
+
+                    <div id="summary_review">
+                        <div id="general_rating">
+                            11 Reviews
+                            <div class="rating">
+                                <i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star"></i>
+                            </div>
+                        </div>
+                        <!-- End row -->
+                        <hr class="styled">
+                        <a href="#" class="btn_1 add_bottom_15" data-toggle="modal" data-target="#myReview">Leave a review</a>
+                    </div><!-- End summary_review -->
+                    <div class="review_strip_single">
+                        <img src="/static/quickfood/img/avatar1.jpg" alt="" class="rounded-circle">
+                        <small> - 10 March 2015 -</small>
+                        <h4>Jhon Doe</h4>
+                        <p>
+                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed a lorem quis neque interdum consequat ut sed sem. Duis quis tempor nunc. Interdum et malesuada fames ac ante ipsum primis in faucibus."
+                        </p>
+                      
+                    </div><!-- End review strip -->
+                    <div class="review_strip_single">
+                        <img src="/static/quickfood/img/avatar3.jpg" alt="" class="rounded-circle">
+                        <small> - 25 March 2015 -</small>
+                        <h4>Markus Schulz</h4>
+                        <p>
+                            "At sed dico invenire facilisis, sed option sapientem iudicabit ad, sea idque doming vituperatoribus at. Duo ut inani tantas scaevola. Commodo oblique at cum. Duo id vide delectus. Vel et doctus laoreet minimum, ei feugait pertinacia usu.
+                        </p>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="rating">
+                                    <i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star"></i><i class="icon_star"></i>
+                                </div>
+                                Food Quality
+                            </div>
+                            <div class="col-md-3">
+                                <div class="rating">
+                                    <i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star"></i><i class="icon_star"></i>
+                                </div>
+                                Price
+                            </div>
+                            <div class="col-md-3">
+                                <div class="rating">
+                                    <i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star"></i><i class="icon_star"></i><i class="icon_star"></i>
+                                </div>
+                                Punctuality
+                            </div>
+                            <div class="col-md-3">
+                                <div class="rating">
+                                    <i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star"></i>
+                                </div>
+                                Courtesy
+                            </div>
+                        </div><!-- End row -->
+                    </div><!-- End review strip -->
+                    <div class="review_strip_single last">
+                        <img src="/static/quickfood/img/avatar2.jpg" alt="" class="rounded-circle">
+                        <small> - 10 April 2015 -</small>
+                        <h4>Frank Cooper</h4>
+                        <p>
+                            "Ne mea congue facilis eligendi, possit utamur sensibus id qui, mel tollit euismod alienum eu. Ad tollit lucilius praesent per, ex probo utroque placerat eos. Tale verear efficiendi et cum, meis timeam vix et, et duis debet nostro mel. Aeterno labitur per no, id nec tantas nemore. An minim molestie per, mei sumo vulputate cu."
+                        </p>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="rating">
+                                    <i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i>
+                                </div>
+                                Food Quality
+                            </div>
+                            <div class="col-md-3">
+                                <div class="rating">
+                                    <i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star"></i><i class="icon_star"></i><i class="icon_star"></i>
+                                </div>
+                                Price
+                            </div>
+                            <div class="col-md-3">
+                                <div class="rating">
+                                    <i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i>
+                                </div>
+                                Punctuality
+                            </div>
+                            <div class="col-md-3">
+                                <div class="rating">
+                                    <i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star voted"></i><i class="icon_star"></i><i class="icon_star"></i>
+                                </div>
+                                Courtesy
+                            </div>
+                        </div><!-- End row -->
+                    </div><!-- End review strip -->
+                </div><!-- End box_style_1 -->
+            </div>
+        </div><!-- End row -->
+    </div><!-- End container -->
+    <!-- End Content =============================================== -->
+{%endblock%}

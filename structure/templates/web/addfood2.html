@@ -1,0 +1,166 @@
+{% extends "web/base.html" %}
+{% block content %}
+    <div id="position">
+        <div class="container">
+            <ul>
+                <li><a href="#0">Home</a></li>
+                <li><a href="#0">Category</a></li>
+                <li>Page active</li>
+            </ul>
+            <a href="#0" class="search-overlay-menu-btn"><i class="icon-search-6"></i> Search</a>
+        </div>
+    </div><!-- Position -->
+    
+    <div class="collapse" id="collapseMap">
+            <div id="map" class="map"></div>
+    </div><!-- End Map -->
+
+    <!-- Content ================================================== -->
+    <div class="container margin_60_35">
+        
+            <div class="col-lg-12">
+                <div class="box_style_2">
+               
+          
+                    <h2 class="inner">Add Menu</h2>
+
+                    <div class="row mb-5">
+                        <form method="post" enctype="multipart/form-data" action="/food/imageadd">
+                            <div class="md:flex items-center gap-10 form-group">
+                                <label class="md:w-32 text-right"> Upload Menu </label>
+                                <div class="flex-1 max-md:mt-4 form-control">
+                                    <input type="file" name ="images"  class="lg:w-1/2 w-full" multiple>
+                                </div>
+                            </div>
+                        <div class="flex items-center gap-4 mt-16 lg:pl-[10.5rem]">
+                            <button type="submit" class="button lg:px-10 bg-primary text-white max-md:flex-1"> Save <span class="ripple-overlay"></span></button>
+                        </div>
+                    </form>
+                    </div>
+
+                    {% if menu_items %}
+                    <h2 class="inner">Food Details</h2>
+          <form method="post" action="/submit_menu">
+            <div id="foods-container">
+                <select class="!border-0 !rounded-md lg:w-1/2 w-full" name="restaurant">
+                    <option>Choose a restaurant</option>
+                    {% for restaurant in restaurants %}
+                    <option value="{{restaurant.id}}"><span>{{restaurant.name}}</i> </span></option>
+                    {% endfor %}
+                </select>
+            {% for item_data in menu_items %}
+            <div class="food-row">
+                    <div class="col-lg-3 form-group">
+                    <label for="food_name">Food Name</label>
+                    <input type="text" name="food_name" value="{{ item_data[0] }}"  class="form-control">
+                    </div>
+             <div class="col-lg-3 form-group">
+                    <label for="food_price">Food Price</label>
+                    <input type="text" name="food_price" value="{{ item_data[1] }}" class="form-control">
+             </div>
+                    <!-- <label for="food_category">Food Category</label>
+                    <input type="text" name="food_category" value="{{ item_data[2] }}" readonly> -->
+                    <div class="col-lg-3 form-group">
+                    <select name="foods-category" class="!border-0 !rounded-md lg:w-1/2 w-full" required>
+                        <option>Choose a category</option>
+                        {% for category in categories %}
+                        <option value="{{category.id}}"><span>{{category.name}}</span></option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="button" class="btn btn-danger remove-food">-</button>
+            </div>
+            {% endfor %}
+        
+
+            <hr>
+        </div>
+        <button type="button" class="btn btn-success" id="add-food">+</button>
+
+            
+            <button type="submit">Submit</button>
+
+        </form>
+        {%endif%}
+
+</div><!-- End container -->
+</div><!-- End container -->
+    <!-- End Content =============================================== -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const foodsContainer = document.getElementById('foods-container');
+            const addFoodButton = document.getElementById('add-food');
+    
+            addFoodButton.addEventListener('click', function () {
+                const template = document.querySelector('.food-row');
+                if (template) {
+                    const clone = template.cloneNode(true);
+    
+                    // Generate unique names for the cloned form fields
+                    const index = foodsContainer.childElementCount;
+                    clone.querySelectorAll('input, select').forEach(field => {
+                        const originalName = field.getAttribute('name');
+                        if (originalName) {
+                            // Update the index in the name, price, and category attributes
+                            const newName = originalName.replace(/-(\d+)/, `-${index}`);
+                            field.setAttribute('name', newName);
+                            field.value = '';  // Clear the value for the new row
+                        }
+                    });
+    
+                    const removeButton = clone.querySelector('.remove-food');
+                    if (removeButton) {
+                        removeButton.addEventListener('click', function () {
+                            clone.remove();
+                        });
+                    }
+    
+                    foodsContainer.appendChild(clone);
+                }
+            });
+    
+            // Event delegation for dynamic elements
+            foodsContainer.addEventListener('click', function (event) {
+                if (event.target && event.target.classList.contains('remove-food')) {
+                    console.log('removing...')
+                    console.log(event.target)
+                    event.target.closest('.food-row').remove();
+                }
+            });
+        });
+    </script>
+    
+    
+    <!-- <script>
+        // JavaScript code to dynamically add and remove food rows
+        document.addEventListener('DOMContentLoaded', function () {
+            const foodsContainer = document.getElementById('foods-container');
+            const addFoodButton = document.getElementById('add-food');
+    
+            addFoodButton.addEventListener('click', function () {
+                const template = document.querySelector('.food-row');
+                const clone = template.cloneNode(true);
+    
+                // Generate unique names for the cloned form fields
+                const index = foodsContainer.childElementCount;
+                clone.querySelectorAll('input, select').forEach(field => {
+                    const originalName = field.getAttribute('name');
+                    if (originalName) {
+                        // Update the index in the name, price, and category attributes
+                        const newName = originalName.replace(/-(\d+)/, `-${index}`);
+                        field.setAttribute('name', newName);
+                    }
+                });
+    
+                clone.querySelector('.remove-food').addEventListener('click', function () {
+                    clone.remove();
+                });
+    
+                foodsContainer.appendChild(clone);
+            });
+        });
+    </script> -->
+
+    
+{%endblock%}

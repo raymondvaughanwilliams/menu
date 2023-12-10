@@ -102,7 +102,7 @@ def imageadd():
 
 
 
-@web.route('/index')
+@web.route('/')
 def index():
     form = SearchForm()
     per_page = 40

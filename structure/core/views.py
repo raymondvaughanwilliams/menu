@@ -19,9 +19,9 @@ from structure.core.forms import FilterForm,SipRequestForm , IssueForm,NumberSea
 from structure.about.forms import AboutForm
 from werkzeug.utils import secure_filename
 from PIL import Image
-import pytesseract 
-from io import BytesIO
-import base64
+# import pytesseract 
+# from io import BytesIO
+# import base64
 
 core = Blueprint('core', __name__)
 

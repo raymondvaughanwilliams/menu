@@ -21,8 +21,8 @@ from structure.web.forms import SearchForm ,AddFoodsForm
 from structure.models import User  , Category , Restaurant , Food ,Comment
 from werkzeug.utils import secure_filename
 from PIL import Image
-import pytesseract 
-from io import BytesIO
+# import pytesseract 
+# from io import BytesIO
 import base64
 from faker import Faker
 

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocketIO Test</title>
+</head>
+<body>
+    <h1>SocketIO Test</h1>
+    <div id="room-container">
+        <input type="text" id="room-input" placeholder="Enter room name">
+        <button onclick="joinRoom()">Join Room</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
+    
+    <!-- Load simple-peer before using it -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/simple-peer@15.2.1/simplepeer.min.js"></script> -->
+
+    <script>
+        var socket;
+    
+        document.addEventListener('DOMContentLoaded', function () {
+            socket = io.connect('http://' + document.domain + ':' + location.port);
+    
+            // Handle successful connection
+            socket.on('connect', function () {
+                console.log('Connected to the server.');
+            });
+    
+            // Handle connection errors
+            socket.on('connect_error', function (error) {
+                console.error('Connection error:', error);
+            });
+        });
+    
+        var peer;
+    
+        function joinRoom() {
+            console.log('joinRoom function called');
+            var room = document.getElementById('room-input').value;
+            console.log('Joining room:', room);
+    
+            socket.emit('join_room', { 'room': room });
+    
+            // Initialize WebRTC peer connection
+            peer = new SimplePeer({ initiator: true, trickle: false });
+
+        // When the peer connection is established
+        peer.on('signal', function(data) {
+            console.log('Generated offer signal:', data);
+            socket.emit('offer', { room: room, signal: data });
+        });
+
+        // Handle incoming signals from other peers
+        socket.on('offer', function(data) {
+            console.log('Received offer signal:', data.signal);
+            peer.signal(data.signal);
+        });
+
+        // Append the video element to the body
+        var video = document.createElement('video');
+        document.body.appendChild(video);
+
+        // When the video stream is received
+        peer.on('stream', function(stream) {
+            console.log('Received video stream:', stream);
+            video.srcObject = stream;
+            video.play();
+        });
+
+        // Handle errors
+        peer.on('error', function (err) {
+            console.error('Peer connection error:', err);
+        });
+
+        // Handle 'joined_room' event
+        socket.on('joined_room', function(data) {
+            console.log('Joined room:', data.room);
+        });
+    }
+    </script>
+    
+</body>
+</html>

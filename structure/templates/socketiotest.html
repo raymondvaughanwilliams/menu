@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Therapy Session</title>
+</head>
+<body>
+    <h1>Therapy Session</h1>
+    <button onclick="startMeeting()">Start Meeting</button>
+    <div id="local-video"></div>
+
+    <!-- <script src="https://cdn.agora.io/sdk/release/AgoraRTCSDK-4.0.0.js"></script> -->
+    <script src=" https://cdn.jsdelivr.net/npm/agora-rtc-sdk@3.6.11/AgoraRTCSDK.min.js "></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <script>
+        const agoraAppId = 'f843260c8cef409bbb62f9c6aeb52ecd';
+        const channelName = 'Udo';
+        const uid = Math.floor(Math.random() * 1000000);
+
+        const socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'h264' });
+        client.init(agoraAppId, () => console.log('Agora client initialized successfully'), err => console.error(err));
+
+        function startMeeting() {
+            client.join(null, channelName, null, uid, () => console.log('User joined channel successfully'), err => console.error(err));
+
+            const localStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
+            localStream.init(() => {
+                localStream.play('local-video');
+                client.publish(localStream);
+            }, err => console.error(err));
+
+            socket.emit('join_room', { 'room': channelName });
+        }
+
+        socket.on('joined_room', data => {
+            console.log('Joined room:', data.room);
+            // Provide the clients with the link to join the meeting
+            // You can use this information to generate unique meeting links for clients
+        });
+    </script>
+</body>
+</html>

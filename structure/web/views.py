@@ -423,3 +423,42 @@ def generate_dummy_data():
         db.session.add(food)
 
     db.session.commit()
+
+
+
+# from flask import Flask, render_template
+from flask_socketio import SocketIO, emit, join_room
+
+# ppp = Flask(__name__)
+socketio = SocketIO(app)
+
+# @web.route('/ttt')
+# def ttt():
+#     return render_template('socketiotest.html')
+
+# @socketio.on('join_room')
+# def handle_join_room(data):
+#     print('h')
+#     room = data['room']
+#     join_room(room)
+#     emit('joined_room', {'room': room}, room=room)
+
+@web.route('/ttt')
+def ttt():
+    return render_template('socketiotest.html')
+
+@socketio.on('join_room')
+def handle_join_room(data):
+    print('joining')
+    room = data['room']
+    join_room(room)
+    emit('joined_room', {'room': room}, room=room)
+
+@socketio.on('offer')
+def handle_offer(data):
+    print('offwring')
+    room = data['room']
+    signal = data['signal']
+    emit('offer', {'room': room, 'signal': signal}, room=room)
+
+

@@ -18,7 +18,8 @@
     <script>
         const agoraAppId = '{{agora_id}}';
         const channelName = 'Udo';
-        const uid = Math.floor(Math.random() * 1000000);
+        const uid = Math.floor(Math.random() * 1000000).toString();
+        console.log(uid)
 
         const socket = io.connect('http://' + document.domain + ':' + location.port);
 
@@ -26,6 +27,8 @@
         client.init(agoraAppId, () => console.log('Agora client initialized successfully'), err => console.error(err));
 
         function startMeeting() {
+            console.log(channelName)
+            console.log(uid)
             console.log('trying to start meeting')
             client.join(null, channelName, null, uid, () => console.log('User joined channel successfully'), err => console.error(err));
             console.log("still working..")

@@ -445,7 +445,8 @@ socketio = SocketIO(app)
 
 @web.route('/ttt')
 def ttt():
-    return render_template('socketiotest.html')
+    agora_id = os.environ.get('AGORA_ID')
+    return render_template('socketiotest.html',agora_id=agora_id)
 
 @socketio.on('join_room')
 def handle_join_room(data):

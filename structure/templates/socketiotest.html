@@ -15,7 +15,7 @@
     <script src=" https://cdn.jsdelivr.net/npm/agora-rtc-sdk@3.6.11/AgoraRTCSDK.min.js "></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
     <script>
-        const agoraAppId = 'f843260c8cef409bbb62f9c6aeb52ecd';
+        const agoraAppId = '{{agora_id}}';
         const channelName = 'Udo';
         const uid = Math.floor(Math.random() * 1000000);
 
@@ -25,6 +25,7 @@
         client.init(agoraAppId, () => console.log('Agora client initialized successfully'), err => console.error(err));
 
         function startMeeting() {
+            console.log('trying to start meeting')
             client.join(null, channelName, null, uid, () => console.log('User joined channel successfully'), err => console.error(err));
 
             const localStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });

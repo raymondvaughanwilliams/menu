@@ -10,6 +10,7 @@
     <h1>Therapy Session</h1>
     <button onclick="startMeeting()">Start Meeting</button>
     <div id="local-video"></div>
+    <div id="therapist-video"></div>
 
     <!-- <script src="https://cdn.agora.io/sdk/release/AgoraRTCSDK-4.0.0.js"></script> -->
     <script src=" https://cdn.jsdelivr.net/npm/agora-rtc-sdk@3.6.11/AgoraRTCSDK.min.js "></script>
@@ -24,10 +25,31 @@
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'h264' });
         client.init(agoraAppId, () => console.log('Agora client initialized successfully'), err => console.error(err));
 
-        // function startMeeting() {
-        //     console.log('trying to start meeting')
-        //     client.join(null, channelName, null, uid, () => console.log('User joined channel successfully'), err => console.error(err));
+        function startMeeting() {
+            console.log('trying to start meeting')
+            client.join(null, channelName, null, uid, () => console.log('User joined channel successfully'), err => console.error(err));
+            console.log("still working..")
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then(stream => {
+                console.log('Local media access granted:', stream);
 
+                const localStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
+                localStream.init(() => {
+                    localStream.play('local-video');
+                    client.publish(localStream);
+
+                    console.log('Local stream published successfully');
+
+                    // For simplicity, let's handle therapist logic here too
+                    const therapistStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
+                    therapistStream.init(() => {
+                        therapistStream.play('therapist-video');
+                        console.log('Therapist stream played successfully');
+                    }, err => console.error(err));
+                }, err => console.error(err));
+            })
+            .catch(error => console.error('Error accessing local media:', error));
+    }
         //     const localStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
         //     localStream.init(() => {
         //         localStream.play('local-video');
@@ -39,44 +61,75 @@
 
 
 
-        function startMeeting() {
-    // Initialize Agora client for the user
-    client.join(null, channelName, null, uid, () => {
-        console.log('User joined channel successfully');
+//         function startMeeting() {
+//             console.log("starting meeting...")
+//     // Initialize Agora client for the user
+//         client.join(null, channelName, null, uid, () => {
+//         console.log('User joined channel successfully');
 
-        // Access local media
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-            .then(stream => {
-                const localStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
-                localStream.init(() => {
-                    localStream.play('local-video');
-                    client.publish(localStream);
+//         // Access local media
+//         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+//             .then(stream => {
+//                 const localStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
+//                 localStream.init(() => {
+//                     localStream.play('local-video');
+//                     client.publish(localStream);
 
-                    // Initialize Agora client for the therapist to join
-                    const agoraTherapistClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'h264' });
-                    agoraTherapistClient.init(agoraAppId, () => {
-                        agoraTherapistClient.join(null, channelName, null, () => {
-                            // Handle the therapist joining, play their video, etc.
-                            const therapistVideo = document.createElement('div');
-                            therapistVideo.id = 'therapist-video';
-                            document.body.appendChild(therapistVideo);
+//                     // Initialize Agora client for the therapist to join
+//                     const agoraTherapistClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'h264' });
+//                     agoraTherapistClient.init(agoraAppId, () => {
+//                         agoraTherapistClient.join(null, channelName, null, () => {
+//                             // Handle the therapist joining, play their video, etc.
+//                             const therapistVideo = document.createElement('div');
+//                             therapistVideo.id = 'therapist-video';
+//                             document.body.appendChild(therapistVideo);
 
-                            const therapistStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
-                            therapistStream.init(() => {
-                                therapistStream.play('therapist-video');
-                            }, err => console.error(err));
-                        }, err => console.error(err));
-                    }, err => console.error(err));
-                }, err => console.error(err));
-            })
-            .catch(error => console.error('Error accessing local media:', error));
-    }, err => console.error(err));
-}
+//                             const therapistStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
+//                             therapistStream.init(() => {
+//                                 therapistStream.play('therapist-video');
+//                             }, err => console.error(err));
+//                         }, err => console.error(err));
+//                     }, err => console.error(err));
+//                 }, err => console.error(err));
+//             })
+//             .catch(error => console.error('Error accessing local media:', error));
+//     }, err => console.error(err));
+// }
         // socket.on('joined_room', data => {
         //     console.log('Joined room:', data.room);
         //     // Provide the clients with the link to join the meeting
         //     // You can use this information to generate unique meeting links for clients
         // });
+
+
+//         function startMeeting() {
+//     console.log("starting meeting...");
+
+//     client.join(null, channelName, null, uid, (uid) => {
+//         console.log('User joined channel successfully with UID:', uid);
+
+//         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+//             .then(stream => {
+//                 console.log('Local media access granted:', stream);
+
+//                 const localStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
+//                 localStream.init(() => {
+//                     localStream.play('local-video');
+//                     client.publish(localStream);
+
+//                     console.log('Local stream published successfully');
+
+//                     // For simplicity, let's handle therapist logic here too
+//                     const therapistStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
+//                     therapistStream.init(() => {
+//                         therapistStream.play('therapist-video');
+//                         console.log('Therapist stream played successfully');
+//                     }, err => console.error(err));
+//                 }, err => console.error(err));
+//             })
+//             .catch(error => console.error('Error accessing local media:', error));
+//     }, err => console.error(err));
+// }
     </script>
 </body>
 </html>

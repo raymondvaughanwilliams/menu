@@ -9,8 +9,11 @@
 <body>
     <h1>Therapy Session</h1>
     <button onclick="startMeeting()">Start Meeting</button>
-    <div id="local-video"></div>
-    <div id="therapist-video"></div>
+    1:
+    <div id="local-video" style="width: 320px; height: 240px;"></div>
+    2:
+    <div id="therapist-video" style="width: 320px; height: 240px;"></div>
+    
 
     <!-- <script src="https://cdn.agora.io/sdk/release/AgoraRTCSDK-4.0.0.js"></script> -->
     <script src=" https://cdn.jsdelivr.net/npm/agora-rtc-sdk@3.6.11/AgoraRTCSDK.min.js "></script>
@@ -20,6 +23,7 @@
         const channelName = 'Udo';
         const uid = Math.floor(Math.random() * 1000000).toString();
         console.log(uid)
+        console.log(agoraAppId)
 
         const socket = io.connect('http://' + document.domain + ':' + location.port);
 
@@ -38,6 +42,7 @@
 
                 const localStream = AgoraRTC.createStream({ streamID: uid, audio: true, video: true, screen: false });
                 localStream.init(() => {
+                    console.log('Local stream initialized successfully');
                     localStream.play('local-video');
                     client.publish(localStream);
 
